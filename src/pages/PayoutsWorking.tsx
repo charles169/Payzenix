@@ -3,17 +3,11 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Eye, Download, Pencil, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-const initialPayslips = [
-  { empId: 'EMP001', name: 'Arun Kumar', dept: 'Engineering', month: 'January', year: '2024', gross: 75000, deductions: 11400, net: 52450, status: 'Paid' },
-  { empId: 'EMP002', name: 'Priya Sharma', dept: 'HR', month: 'January', year: '2024', gross: 68000, deductions: 9800, net: 48200, status: 'Paid' },
-  { empId: 'EMP003', name: 'Rahul Verma', dept: 'Finance', month: 'December', year: '2023', gross: 72000, deductions: 10944, net: 50400, status: 'Pending' },
-  { empId: 'EMP004', name: 'Sneha Iyer', dept: 'Marketing', month: 'December', year: '2023', gross: 64000, deductions: 9000, net: 45000, status: 'Pending' },
-  { empId: 'EMP005', name: 'Vijay Reddy', dept: 'Engineering', month: 'January', year: '2024', gross: 80000, deductions: 12000, net: 68000, status: 'Paid' },
-];
+import { payrollAPI } from '@/services/api';
 
 export const PayoutsWorkingPage = () => {
-  const [payslips, setPayslips] = useState(initialPayslips);
+  const [payslips, setPayslips] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('all');
   const [status, setStatus] = useState('all');
@@ -22,11 +16,28 @@ export const PayoutsWorkingPage = () => {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
+  useEffect(() => {
+    loadPayslips();
+  }, []);
+
+  const loadPayslips = async () => {
+    try {
+      setLoading(true);
+      const data = await payrollAPI.getAll();
+      setPayslips(data);
+    } catch (error) {
+      console.error('Error loading payslips:', error);
+      toast.error('Failed to load payslips');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filtered = payslips.filter(
     (p) =>
-      (p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.empId.toLowerCase().includes(search.toLowerCase())) &&
-      (year === 'all' || p.year === year) &&
+      ((p.employee || '').toLowerCase().includes(search.toLowerCase()) ||
+        (p.employeeId || '').toLowerCase().includes(search.toLowerCase())) &&
+      (year === 'all' || p.year?.toString() === year) &&
       (status === 'all' || p.status === status)
   );
 

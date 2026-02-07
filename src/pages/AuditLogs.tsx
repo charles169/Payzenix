@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Shield, Search, Filter, Download, User, FileText, DollarSign, Settings, Clock } from 'lucide-react';
@@ -10,99 +10,50 @@ export const AuditLogsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAuditLogs();
+  }, []);
+
+  const loadAuditLogs = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/audit-logs', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      setAuditLogs(data);
+    } catch (error) {
+      console.error('Error loading audit logs:', error);
+      toast.error('Failed to load audit logs');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const showPopup = (message: string) => {
     setModalMessage(message);
     setShowModal(true);
   };
 
-  const auditLogs = [
-    {
-      id: 'AUD001',
-      action: 'Employee Created',
-      user: 'Admin User',
-      details: 'Created employee record for Rajesh Kumar (EMP048)',
-      timestamp: '2024-02-06 14:30:25',
-      type: 'create',
-      icon: User,
-      color: '#10b981'
-    },
-    {
-      id: 'AUD002',
-      action: 'Payroll Processed',
-      user: 'Admin User',
-      details: 'Processed January 2024 payroll for 48 employees',
-      timestamp: '2024-02-06 12:15:10',
-      type: 'process',
-      icon: DollarSign,
-      color: '#4f46e5'
-    },
-    {
-      id: 'AUD003',
-      action: 'Employee Updated',
-      user: 'HR Manager',
-      details: 'Updated salary for Priya Sharma from ₹70,000 to ₹72,000',
-      timestamp: '2024-02-06 11:45:30',
-      type: 'update',
-      icon: User,
-      color: '#f59e0b'
-    },
-    {
-      id: 'AUD004',
-      action: 'Settings Changed',
-      user: 'Super Admin',
-      details: 'Updated PF contribution rate from 12% to 12.5%',
-      timestamp: '2024-02-06 10:20:15',
-      type: 'settings',
-      icon: Settings,
-      color: '#8b5cf6'
-    },
-    {
-      id: 'AUD005',
-      action: 'Report Generated',
-      user: 'Admin User',
-      details: 'Generated Q4 2023 Attendance Report',
-      timestamp: '2024-02-06 09:30:00',
-      type: 'report',
-      icon: FileText,
-      color: '#06b6d4'
-    },
-    {
-      id: 'AUD006',
-      action: 'Loan Approved',
-      user: 'HR Manager',
-      details: 'Approved personal loan of ₹50,000 for Amit Patel',
-      timestamp: '2024-02-05 16:45:20',
-      type: 'approval',
-      icon: DollarSign,
-      color: '#10b981'
-    },
-    {
-      id: 'AUD007',
-      action: 'Employee Deleted',
-      user: 'Admin User',
-      details: 'Deleted employee record for John Doe (EMP025)',
-      timestamp: '2024-02-05 14:20:10',
-      type: 'delete',
-      icon: User,
-      color: '#dc2626'
-    },
-    {
-      id: 'AUD008',
-      action: 'Leave Approved',
-      user: 'HR Manager',
-      details: 'Approved 3 days sick leave for Sneha Reddy',
-      timestamp: '2024-02-05 11:30:45',
-      type: 'approval',
-      icon: FileText,
-      color: '#10b981'
-    },
-  ];
+  // Helper function to get icon and color based on action type
+  const getLogIcon = (action: string) => {
+    if (action.includes('Employee') || action.includes('User')) return { icon: User, color: '#10b981' };
+    if (action.includes('Payroll') || action.includes('Loan')) return { icon: DollarSign, color: '#4f46e5' };
+    if (action.includes('Settings')) return { icon: Settings, color: '#8b5cf6' };
+    if (action.includes('Report')) return { icon: FileText, color: '#06b6d4' };
+    return { icon: Clock, color: '#666' };
+  };
 
   const filteredLogs = auditLogs.filter(log =>
-    log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.details.toLowerCase().includes(searchTerm.toLowerCase())
+    (log.action || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (log.user || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (log.details || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getTypeBadge = (type: string) => {
