@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Building2, FileText, Download, Calendar, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { downloadComplianceChallans } from '@/utils/downloadUtils';
 
 const complianceData = {
   pf: { name: 'Provident Fund (PF)', employer: 156780, employee: 156780, total: 313560, dueDate: '15th Feb 2024', status: 'pending', filedMonths: 11, totalMonths: 12 },
@@ -80,6 +81,7 @@ export const ComplianceWorkingPage = () => {
               </div>
               <button
                 onClick={() => {
+                  downloadComplianceChallans();
                   showPopup('✅ All challans downloaded successfully!\n\nFiles saved to your Downloads folder:\n• PF_Challan_Feb2024.pdf\n• ESI_Challan_Feb2024.pdf\n• TDS_Challan_Feb2024.pdf\n• PT_Challan_Feb2024.pdf');
                 }}
                 style={{

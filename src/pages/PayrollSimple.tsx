@@ -3,6 +3,7 @@ import { payrollAPI, employeeAPI, Payroll, Employee } from '@/services/api';
 import toast from 'react-hot-toast';
 import { Download, IndianRupee, Calculator, FileText, CheckCircle, Clock } from 'lucide-react';
 import { generatePayslipPDF } from '@/utils/pdfGenerator';
+import { downloadPayrollPDF } from '@/utils/downloadUtils';
 
 export const PayrollSimplePage = () => {
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
@@ -43,6 +44,11 @@ export const PayrollSimplePage = () => {
   };
 
   const handleExport = () => {
+    downloadPayrollPDF(payrolls);
+    toast.success('Payroll PDF downloaded!');
+  };
+  
+  const handleExportCSV = () => {
     // Export payroll data to CSV
     const headers = ['Month', 'Year', 'Employee', 'Gross Salary', 'Deductions', 'Net Salary', 'Status'];
     const rows = payrolls.map(p => [
@@ -67,7 +73,7 @@ export const PayrollSimplePage = () => {
     a.download = `payroll_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Payroll data exported successfully!');
+    toast.success('Payroll CSV exported!');
   };
 
   const handleProcessPayroll = async () => {
@@ -174,8 +180,25 @@ export const PayrollSimplePage = () => {
                 gap: '8px'
               }}
             >
+              <FileText style={{ width: '16px', height: '16px' }} />
+              PDF
+            </button>
+            <button
+              onClick={handleExportCSV}
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                background: 'white',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
               <Download style={{ width: '16px', height: '16px' }} />
-              Export
+              CSV
             </button>
           </div>
         </div>

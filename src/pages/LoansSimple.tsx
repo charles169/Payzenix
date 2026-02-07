@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { loanAPI, employeeAPI, Loan, Employee } from '@/services/api';
 import toast from 'react-hot-toast';
-import { Plus, Download, Eye, CheckCircle, XCircle, Clock, Search } from 'lucide-react';
+import { Plus, Download, Eye, CheckCircle, XCircle, Clock, Search, FileText } from 'lucide-react';
 import { SimpleLoanForm } from '@/components/SimpleLoanForm';
 import { useAuthStore } from '@/stores/authStore';
 import { hasPermission } from '@/utils/rbac';
+import { downloadLoansPDF } from '@/utils/downloadUtils';
 
 export const LoansSimplePage = () => {
   const { user } = useAuthStore();
@@ -151,23 +152,45 @@ export const LoansSimplePage = () => {
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             {canExport && (
-              <button
-                onClick={handleExport}
-                style={{
-                  padding: '8px 16px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  background: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Download style={{ width: '16px', height: '16px' }} />
-                Export
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    downloadLoansPDF(loans);
+                    toast.success('Loans PDF downloaded!');
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    background: 'white',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <FileText style={{ width: '16px', height: '16px' }} />
+                  PDF
+                </button>
+                <button
+                  onClick={handleExport}
+                  style={{
+                    padding: '8px 16px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    background: 'white',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Download style={{ width: '16px', height: '16px' }} />
+                  CSV
+                </button>
+              </>
             )}
             {canAdd && (
               <button

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { employeeAPI, Employee } from '@/services/api';
 import toast from 'react-hot-toast';
-import { Plus, Download, Edit, Trash2, Mail, Search } from 'lucide-react';
+import { Plus, Download, Edit, Trash2, Mail, Search, FileText } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { useAuthStore } from '@/stores/authStore';
 import { hasPermission } from '@/utils/rbac';
+import { downloadEmployeesPDF, downloadEmployeesCSV } from '@/utils/downloadUtils';
 
 export const EmployeesWorkingPage = () => {
   const { user } = useAuthStore();
@@ -180,23 +181,48 @@ export const EmployeesWorkingPage = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   {canExport && (
-                    <button
-                      onClick={() => toast.success('Exporting...')}
-                      style={{
-                        padding: '8px 16px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <Download style={{ width: '16px', height: '16px' }} />
-                      Export
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          downloadEmployeesPDF(filteredEmployees);
+                          toast.success('PDF downloaded!');
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          background: 'white',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <FileText style={{ width: '16px', height: '16px' }} />
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => {
+                          downloadEmployeesCSV(filteredEmployees);
+                          toast.success('CSV downloaded!');
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          background: 'white',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <Download style={{ width: '16px', height: '16px' }} />
+                        CSV
+                      </button>
+                    </>
                   )}
                   {canAdd && (
                     <button

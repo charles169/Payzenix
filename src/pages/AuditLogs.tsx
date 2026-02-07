@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Shield, Search, Filter, Download, User, FileText, DollarSign, Settings, Clock } from 'lucide-react';
+import { downloadAuditLogsPDF } from '@/utils/downloadUtils';
+import toast from 'react-hot-toast';
 
 export const AuditLogsPage = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -161,7 +163,10 @@ export const AuditLogsPage = () => {
                   Filter
                 </button>
                 <button
-                  onClick={() => showPopup('Exporting audit logs...')}
+                  onClick={() => {
+                    downloadAuditLogsPDF(auditLogs);
+                    toast.success('Audit logs PDF downloaded!');
+                  }}
                   style={{
                     padding: '10px 20px',
                     background: '#4f46e5',
