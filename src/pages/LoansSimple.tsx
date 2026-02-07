@@ -54,29 +54,34 @@ export const LoansSimplePage = () => {
   };
 
   const handleExport = () => {
-    const headers = ['Loan ID', 'Employee', 'Amount', 'Tenure', 'Status', 'Date'];
-    const rows = loans.map(l => [
-      l._id || '',
-      getEmployeeName(l),
-      l.amount,
-      l.tenure,
-      l.status,
-      new Date().toLocaleDateString()
-    ]);
-    
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `loans_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Loans data exported successfully!');
+    try {
+      toast.loading('Generating CSV...', { id: 'loans-csv' });
+      const headers = ['Loan ID', 'Employee', 'Amount', 'Tenure', 'Status', 'Date'];
+      const rows = loans.map(l => [
+        l._id || '',
+        getEmployeeName(l),
+        l.amount,
+        l.tenure,
+        l.status,
+        new Date().toLocaleDateString()
+      ]);
+      
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `loans_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Loans CSV exported!', { id: 'loans-csv' });
+    } catch (error) {
+      toast.error('Failed to export CSV', { id: 'loans-csv' });
+    }
   };
 
   const handleSaveLoan = async (loanData: Partial<Loan>) => {
@@ -154,9 +159,14 @@ export const LoansSimplePage = () => {
             {canExport && (
               <>
                 <button
-                  onClick={() => {
-                    downloadLoansPDF(loans);
-                    toast.success('Loans PDF downloaded!');
+                  onClick={async () => {
+                    try {
+                      toast.loading('Generating Loans PDF...', { id: 'loans-pdf' });
+                      await downloadLoansPDF(loans);
+                      toast.success('Loans PDF downloaded!', { id: 'loans-pdf' });
+                    } catch (error) {
+                      toast.error('Failed to download PDF', { id: 'loans-pdf' });
+                    }
                   }}
                   style={{
                     padding: '8px 16px',

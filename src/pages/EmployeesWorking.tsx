@@ -183,9 +183,14 @@ export const EmployeesWorkingPage = () => {
                   {canExport && (
                     <>
                       <button
-                        onClick={() => {
-                          downloadEmployeesPDF(filteredEmployees);
-                          toast.success('PDF downloaded!');
+                        onClick={async () => {
+                          try {
+                            toast.loading('Generating PDF...', { id: 'emp-pdf' });
+                            await downloadEmployeesPDF(filteredEmployees);
+                            toast.success('Employee PDF downloaded!', { id: 'emp-pdf' });
+                          } catch (error) {
+                            toast.error('Failed to download PDF', { id: 'emp-pdf' });
+                          }
                         }}
                         style={{
                           padding: '8px 16px',
@@ -203,9 +208,14 @@ export const EmployeesWorkingPage = () => {
                         PDF
                       </button>
                       <button
-                        onClick={() => {
-                          downloadEmployeesCSV(filteredEmployees);
-                          toast.success('CSV downloaded!');
+                        onClick={async () => {
+                          try {
+                            toast.loading('Generating CSV...', { id: 'emp-csv' });
+                            await downloadEmployeesCSV(filteredEmployees);
+                            toast.success('Employee CSV downloaded!', { id: 'emp-csv' });
+                          } catch (error) {
+                            toast.error('Failed to download CSV', { id: 'emp-csv' });
+                          }
                         }}
                         style={{
                           padding: '8px 16px',

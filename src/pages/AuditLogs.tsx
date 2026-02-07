@@ -114,9 +114,14 @@ export const AuditLogsPage = () => {
                   Filter
                 </button>
                 <button
-                  onClick={() => {
-                    downloadAuditLogsPDF(auditLogs);
-                    toast.success('Audit logs PDF downloaded!');
+                  onClick={async () => {
+                    try {
+                      toast.loading('Generating Audit Logs PDF...', { id: 'audit-pdf' });
+                      await downloadAuditLogsPDF(auditLogs);
+                      toast.success('Audit logs PDF downloaded!', { id: 'audit-pdf' });
+                    } catch (error) {
+                      toast.error('Failed to download PDF', { id: 'audit-pdf' });
+                    }
                   }}
                   style={{
                     padding: '10px 20px',

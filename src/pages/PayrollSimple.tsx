@@ -43,13 +43,20 @@ export const PayrollSimplePage = () => {
     return (payroll.employee as any)?.name || 'Unknown';
   };
 
-  const handleExport = () => {
-    downloadPayrollPDF(payrolls);
-    toast.success('Payroll PDF downloaded!');
+  const handleExport = async () => {
+    try {
+      toast.loading('Generating Payroll PDF...', { id: 'payroll-pdf' });
+      await downloadPayrollPDF(payrolls);
+      toast.success('Payroll PDF downloaded!', { id: 'payroll-pdf' });
+    } catch (error) {
+      toast.error('Failed to download PDF', { id: 'payroll-pdf' });
+    }
   };
   
   const handleExportCSV = () => {
-    // Export payroll data to CSV
+    try {
+      toast.loading('Generating CSV...', { id: 'payroll-csv' });
+      // Export payroll data to CSV
     const headers = ['Month', 'Year', 'Employee', 'Gross Salary', 'Deductions', 'Net Salary', 'Status'];
     const rows = payrolls.map(p => [
       p.month,
@@ -73,7 +80,10 @@ export const PayrollSimplePage = () => {
     a.download = `payroll_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Payroll CSV exported!');
+    toast.success('Payroll CSV exported!', { id: 'payroll-csv' });
+    } catch (error) {
+      toast.error('Failed to export CSV', { id: 'payroll-csv' });
+    }
   };
 
   const handleProcessPayroll = async () => {
