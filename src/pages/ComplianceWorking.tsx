@@ -97,9 +97,20 @@ export const ComplianceWorkingPage = () => {
               </div>
               <button
                 onClick={async () => {
-                  await downloadComplianceChallans(payrolls);
-                  toast.success('All challans downloaded successfully!');
-                  showPopup('✅ All challans downloaded successfully!\n\nFiles saved to your Downloads folder:\n• PF_Challan_Feb2024.pdf\n• ESI_Challan_Feb2024.pdf\n• TDS_Challan_Feb2024.pdf\n• PT_Challan_Feb2024.pdf');
+                  try {
+                    showPopup('⏳ Generating compliance challans...\n\nPlease wait while we generate:\n• PF Challan\n• ESI Challan\n• TDS Challan\n• PT Challan');
+                    
+                    await downloadComplianceChallans(payrolls);
+                    
+                    setTimeout(() => {
+                      setShowModal(false);
+                      toast.success('All 4 challans downloaded successfully!');
+                    }, 2000);
+                  } catch (error) {
+                    console.error('Error downloading challans:', error);
+                    toast.error('Failed to download challans');
+                    setShowModal(false);
+                  }
                 }}
                 style={{
                   padding: '10px 20px',
