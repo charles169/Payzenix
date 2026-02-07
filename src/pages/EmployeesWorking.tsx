@@ -297,12 +297,12 @@ export const EmployeesWorkingPage = () => {
                     <tr key={employee._id} style={{ borderBottom: '1px solid #e5e7eb' }}>
                       <td style={{ padding: '12px 16px' }}>
                         <div>
-                          <p style={{ fontWeight: '500', margin: 0, marginBottom: '4px' }}>{employee.name}</p>
-                          <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{employee.employeeId}</p>
+                          <p style={{ fontWeight: '500', margin: 0, marginBottom: '4px' }}>{employee.name || 'N/A'}</p>
+                          <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{employee.employeeId || 'N/A'}</p>
                         </div>
                       </td>
-                      <td style={{ padding: '12px 16px' }}>{employee.department}</td>
-                      <td style={{ padding: '12px 16px' }}>{employee.designation}</td>
+                      <td style={{ padding: '12px 16px' }}>{employee.department || 'N/A'}</td>
+                      <td style={{ padding: '12px 16px' }}>{employee.designation || 'N/A'}</td>
                       <td style={{ padding: '12px 16px' }}>{employee.location || 'N/A'}</td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{
@@ -317,7 +317,7 @@ export const EmployeesWorkingPage = () => {
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '500' }}>
-                        ₹{employee.salary.toLocaleString('en-IN')}
+                        ₹{(employee.salary || 0).toLocaleString('en-IN')}
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -363,7 +363,7 @@ export const EmployeesWorkingPage = () => {
                           </button>
                           {canDelete && (
                             <button
-                              onClick={() => employee._id && handleDelete(employee._id, employee.name)}
+                              onClick={() => employee._id && handleDelete(employee._id, employee.name || 'Employee')}
                               style={{
                                 padding: '6px 12px',
                                 border: '1px solid #d1d5db',
