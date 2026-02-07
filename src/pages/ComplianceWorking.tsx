@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Building2, FileText, Download, Calendar, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { downloadComplianceChallans } from '@/utils/downloadUtils';
+import { payrollAPI } from '@/services/api';
+import toast from 'react-hot-toast';
 
 const complianceData = {
   pf: { name: 'Provident Fund (PF)', employer: 156780, employee: 156780, total: 313560, dueDate: '15th Feb 2024', status: 'pending', filedMonths: 11, totalMonths: 12 },
@@ -22,6 +24,20 @@ export const ComplianceWorkingPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [payrolls, setPayrolls] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadPayrolls();
+  }, []);
+
+  const loadPayrolls = async () => {
+    try {
+      const data = await payrollAPI.getAll();
+      setPayrolls(data);
+    } catch (error) {
+      console.error('Error loading payrolls:', error);
+    }
+  };
 
   const showPopup = (message: string) => {
     setModalMessage(message);
@@ -80,8 +96,9 @@ export const ComplianceWorkingPage = () => {
                 <p style={{ color: '#666', fontSize: '14px' }}>Manage PF, ESI, TDS, and Professional Tax filings</p>
               </div>
               <button
-                onClick={() => {
-                  downloadComplianceChallans();
+                onClick={async () => {
+                  await downloadComplianceChallans(payrolls);
+                  toast.success('All challans downloaded successfully!');
                   showPopup('✅ All challans downloaded successfully!\n\nFiles saved to your Downloads folder:\n• PF_Challan_Feb2024.pdf\n• ESI_Challan_Feb2024.pdf\n• TDS_Challan_Feb2024.pdf\n• PT_Challan_Feb2024.pdf');
                 }}
                 style={{
