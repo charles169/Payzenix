@@ -1,0 +1,33 @@
+Hey! Thanks for checking out PayZenix! 👋
+
+If you're getting "Invalid credentials" error, here's the fix:
+
+🔧 THE PROBLEM:
+You cloned the code but don't have the database with users yet!
+
+✅ THE SOLUTION (3 steps):
+
+1. Install MongoDB Community Server
+   Download: https://www.mongodb.com/try/download/community
+
+2. Seed the database (this creates all users):
+   cd server
+   node seed-mongodb.js
+
+3. Start the servers:
+   Terminal 1: cd server && node index-mongodb.js
+   Terminal 2: npm run dev
+
+📖 FULL INSTRUCTIONS:
+Read SETUP.md file - it has everything step by step!
+
+🔑 LOGIN CREDENTIALS (after seeding):
+Email: superadmin@payzenix.com
+Password: admin123
+
+Other accounts:
+- admin@payzenix.com / admin123
+- hr@payzenix.com / admin123
+- employee@payzenix.com / admin123
+
+That's it! Let me know if you need help! 🚀
