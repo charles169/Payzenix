@@ -380,58 +380,6 @@ export const PayoutsWorkingPage = () => {
               </table>
             </div>
 
-            {/* Preview Modal */}
-            {preview && (
-              <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0,0,0,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 99999
-              }}>
-                <div style={{
-                  background: 'white',
-                  borderRadius: '12px',
-                  padding: '30px',
-                  maxWidth: '500px',
-                  width: '90%'
-                }}>
-                  <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Payslip Preview</h2>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    <div><strong>Name:</strong> {preview.name}</div>
-                    <div><strong>Department:</strong> {preview.dept}</div>
-                    <div><strong>Month:</strong> {preview.month} {preview.year}</div>
-                    <div><strong>Gross Salary:</strong> ₹{preview.gross.toLocaleString()}</div>
-                    <div><strong>Deductions:</strong> ₹{preview.deductions.toLocaleString()}</div>
-                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#16a34a', paddingTop: '12px', borderTop: '2px solid #e5e7eb' }}>
-                      <strong>Net Pay:</strong> ₹{preview.net.toLocaleString()}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setPreview(null)}
-                    style={{
-                      width: '100%',
-                      marginTop: '20px',
-                      padding: '10px',
-                      background: '#4f46e5',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '500'
-                    }}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </main>
       </div>
