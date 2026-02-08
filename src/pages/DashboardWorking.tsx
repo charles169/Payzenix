@@ -93,47 +93,56 @@ export const DashboardWorkingPage = () => {
       });
       const payrolls = await response.json();
       
-      // Group payrolls by month/year and count unique employees
-      const payrollsByMonth = payrolls.reduce((acc: any, p: any) => {
+      console.log('🔍 Raw payrolls from API:', payrolls);
+      
+      // Simple approach: just format the data directly
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      const formattedPayrolls = payrolls.map((p: any) => ({
+        monthText: `${monthNames[p.month - 1]} ${p.year}`,
+        month: p.month,
+        year: p.year,
+        employee: p.employee,
+        netSalary: p.netSalary || 0
+      }));
+      
+      console.log('📝 Formatted payrolls:', formattedPayrolls);
+      
+      // Group by month/year
+      const grouped: any = {};
+      formattedPayrolls.forEach((p: any) => {
         const key = `${p.month}-${p.year}`;
-        if (!acc[key]) {
-          // Create month name manually
-          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                             'July', 'August', 'September', 'October', 'November', 'December'];
-          const monthName = monthNames[p.month - 1] || 'Unknown';
-          
-          acc[key] = {
-            monthDisplay: `${monthName} ${p.year}`,
-            monthNum: p.month,
+        if (!grouped[key]) {
+          grouped[key] = {
+            monthText: p.monthText,
+            month: p.month,
             year: p.year,
             employees: 0,
-            totalAmount: 0,
-            status: 'completed'
+            totalAmount: 0
           };
         }
-        acc[key].employees += 1;
-        acc[key].totalAmount += p.netSalary || 0;
-        return acc;
-      }, {});
+        grouped[key].employees += 1;
+        grouped[key].totalAmount += p.netSalary;
+      });
       
-      // Convert to array and sort by date (newest first)
-      const payrollArray = Object.values(payrollsByMonth)
+      console.log('📦 Grouped payrolls:', grouped);
+      
+      // Convert to array and sort
+      const payrollArray = Object.values(grouped)
         .sort((a: any, b: any) => {
-          // Sort by year first, then by month
           if (a.year !== b.year) return b.year - a.year;
-          return b.monthNum - a.monthNum;
+          return b.month - a.month;
         })
-        .slice(0, 3) // Take only last 3 months
-        .map((p: any) => {
-          return {
-            month: p.monthDisplay,
-            employees: p.employees,
-            amount: `₹${p.totalAmount.toLocaleString('en-IN')}`,
-            status: 'completed'
-          };
-        });
+        .slice(0, 3)
+        .map((p: any) => ({
+          month: p.monthText,
+          employees: p.employees,
+          amount: `₹${p.totalAmount.toLocaleString('en-IN')}`,
+          status: 'completed'
+        }));
       
-      console.log('📊 Recent payrolls:', payrollArray);
+      console.log('📊 Final payroll array:', payrollArray);
       setRecentPayrolls(payrollArray);
     } catch (error) {
       console.error('Error fetching recent payrolls:', error);
