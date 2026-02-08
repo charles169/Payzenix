@@ -433,17 +433,17 @@ export const DashboardWorkingPage = () => {
                       recentPayrolls.map((payroll, index) => {
                         console.log(`Row ${index}:`, payroll);
                         return (
-                          <tr key={payroll.month} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                            <td style={{ padding: '12px', fontWeight: '500', width: '30%' }}>
-                              {payroll.month || 'N/A'}
+                          <tr key={`payroll-${index}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <td style={{ padding: '12px', fontWeight: '500' }}>
+                              <span>{payroll.month || 'N/A'}</span>
                             </td>
-                            <td style={{ padding: '12px', width: '20%' }}>
-                              {payroll.employees || 0}
+                            <td style={{ padding: '12px' }}>
+                              <span>{payroll.employees || 0}</span>
                             </td>
-                            <td style={{ padding: '12px', width: '25%' }}>
-                              {payroll.amount || '₹0'}
+                            <td style={{ padding: '12px' }}>
+                              <span>{payroll.amount || '₹0'}</span>
                             </td>
-                            <td style={{ padding: '12px', width: '25%' }}>
+                            <td style={{ padding: '12px' }}>
                               <span style={{
                                 padding: '4px 12px',
                                 background: '#dcfce7',
