@@ -93,8 +93,6 @@ export const DashboardWorkingPage = () => {
       });
       const payrolls = await response.json();
       
-      console.log('🔍 Raw payrolls from API:', payrolls);
-      
       // Month names for formatting
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                          'July', 'August', 'September', 'October', 'November', 'December'];
@@ -116,8 +114,6 @@ export const DashboardWorkingPage = () => {
         grouped[key].totalAmount += (p.netSalary || 0);
       });
       
-      console.log('📦 Grouped payrolls:', grouped);
-      
       // Convert to array, sort by date (newest first), and take top 3
       const payrollArray = Object.values(grouped)
         .sort((a: any, b: any) => {
@@ -132,15 +128,7 @@ export const DashboardWorkingPage = () => {
           status: 'completed'
         }));
       
-      console.log('📊 Final payroll array:', payrollArray);
-      console.log('📊 Setting recentPayrolls state with:', payrollArray);
-      
       setRecentPayrolls(payrollArray);
-      
-      // Verify state was set
-      setTimeout(() => {
-        console.log('✅ State verification - recentPayrolls should now be:', payrollArray);
-      }, 100);
     } catch (error) {
       console.error('Error fetching recent payrolls:', error);
       setRecentPayrolls([]);
@@ -421,16 +409,6 @@ export const DashboardWorkingPage = () => {
                   </button>
                 </div>
 
-                {/* Debug info */}
-                <div style={{ padding: '10px', background: '#f0f0f0', marginBottom: '10px', fontSize: '12px', fontFamily: 'monospace' }}>
-                  <strong>Debug:</strong> recentPayrolls.length = {recentPayrolls.length}
-                  {recentPayrolls.length > 0 && (
-                    <div>
-                      First item: {JSON.stringify(recentPayrolls[0])}
-                    </div>
-                  )}
-                </div>
-
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
@@ -442,6 +420,35 @@ export const DashboardWorkingPage = () => {
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Test row with hardcoded data */}
+                      <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                        <td style={{ padding: '12px 16px', fontWeight: '500', whiteSpace: 'nowrap', background: '#fff' }}>
+                          TEST MONTH
+                        </td>
+                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', background: '#fff' }}>
+                          99
+                        </td>
+                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', background: '#fff' }}>
+                          ₹99,999
+                        </td>
+                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', background: '#fff' }}>
+                          <span style={{
+                            padding: '4px 12px',
+                            background: '#dcfce7',
+                            color: '#166534',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <CheckCircle style={{ width: '12px', height: '12px' }} />
+                            Test
+                          </span>
+                        </td>
+                      </tr>
+                      
                       {recentPayrolls.length === 0 ? (
                         <tr>
                           <td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
@@ -450,17 +457,20 @@ export const DashboardWorkingPage = () => {
                         </tr>
                       ) : (
                         recentPayrolls.map((payroll, index) => {
-                          console.log(`Row ${index}:`, payroll);
+                          const monthText = payroll.monthName || 'N/A';
+                          const empCount = payroll.employees || 0;
+                          const amountText = payroll.amount || '₹0';
+                          
                           return (
-                            <tr key={index} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <tr key={`payroll-row-${index}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
                               <td style={{ padding: '12px 16px', fontWeight: '500', whiteSpace: 'nowrap' }}>
-                                {String(payroll.monthName || 'N/A')}
+                                <span>{monthText}</span>
                               </td>
                               <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                                {String(payroll.employees || 0)}
+                                <span>{empCount}</span>
                               </td>
                               <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                                {String(payroll.amount || '₹0')}
+                                <span>{amountText}</span>
                               </td>
                               <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
                                 <span style={{
