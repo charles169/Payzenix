@@ -18,11 +18,7 @@ export const DashboardWorkingPage = () => {
     pendingApprovals: 0,
     complianceScore: 98,
   });
-  const [recentPayrolls, setRecentPayrolls] = useState<any[]>([
-    { monthName: 'February 2026', employees: 12, amount: '₹8,58,550', status: 'completed' },
-    { monthName: 'January 2026', employees: 11, amount: '₹7,15,000', status: 'completed' },
-    { monthName: 'December 2025', employees: 10, amount: '₹6,50,000', status: 'completed' }
-  ]);
+  const [recentPayrolls, setRecentPayrolls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -97,29 +93,17 @@ export const DashboardWorkingPage = () => {
       });
       const payrolls = await response.json();
       
-      console.log('🔍 Raw payrolls from API:', payrolls);
-      
-      // Simple approach: just format the data directly
+      // Month names for formatting
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                          'July', 'August', 'September', 'October', 'November', 'December'];
       
-      const formattedPayrolls = payrolls.map((p: any) => ({
-        monthText: `${monthNames[p.month - 1]} ${p.year}`,
-        month: p.month,
-        year: p.year,
-        employee: p.employee,
-        netSalary: p.netSalary || 0
-      }));
-      
-      console.log('📝 Formatted payrolls:', formattedPayrolls);
-      
-      // Group by month/year
+      // Format and group payrolls by month/year
       const grouped: any = {};
-      formattedPayrolls.forEach((p: any) => {
+      payrolls.forEach((p: any) => {
         const key = `${p.month}-${p.year}`;
         if (!grouped[key]) {
           grouped[key] = {
-            monthText: p.monthText,
+            monthName: `${monthNames[p.month - 1]} ${p.year}`,
             month: p.month,
             year: p.year,
             employees: 0,
@@ -127,12 +111,10 @@ export const DashboardWorkingPage = () => {
           };
         }
         grouped[key].employees += 1;
-        grouped[key].totalAmount += p.netSalary;
+        grouped[key].totalAmount += (p.netSalary || 0);
       });
       
-      console.log('📦 Grouped payrolls:', grouped);
-      
-      // Convert to array and sort
+      // Convert to array, sort by date (newest first), and take top 3
       const payrollArray = Object.values(grouped)
         .sort((a: any, b: any) => {
           if (a.year !== b.year) return b.year - a.year;
@@ -140,13 +122,12 @@ export const DashboardWorkingPage = () => {
         })
         .slice(0, 3)
         .map((p: any) => ({
-          monthName: p.monthText,
+          monthName: p.monthName,
           employees: p.employees,
           amount: `₹${p.totalAmount.toLocaleString('en-IN')}`,
           status: 'completed'
         }));
       
-      console.log('📊 Final payroll array:', payrollArray);
       setRecentPayrolls(payrollArray);
     } catch (error) {
       console.error('Error fetching recent payrolls:', error);
@@ -431,10 +412,10 @@ export const DashboardWorkingPage = () => {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Month</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Employees</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Amount</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Status</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Month</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Employees</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Amount</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -447,16 +428,16 @@ export const DashboardWorkingPage = () => {
                     ) : (
                       recentPayrolls.map((payroll, index) => (
                         <tr key={`payroll-${index}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                          <td style={{ padding: '12px', fontWeight: '500', minWidth: '150px' }}>
-                            <div style={{ display: 'block' }}>{payroll.monthName || 'TEST MONTH'}</div>
+                          <td style={{ padding: '12px 16px', fontWeight: '500' }}>
+                            {payroll.monthName}
                           </td>
-                          <td style={{ padding: '12px', minWidth: '100px' }}>
-                            <div style={{ display: 'block' }}>{payroll.employees || 0}</div>
+                          <td style={{ padding: '12px 16px' }}>
+                            {payroll.employees}
                           </td>
-                          <td style={{ padding: '12px', minWidth: '120px' }}>
-                            <div style={{ display: 'block' }}>{payroll.amount || '₹0'}</div>
+                          <td style={{ padding: '12px 16px' }}>
+                            {payroll.amount}
                           </td>
-                          <td style={{ padding: '12px', minWidth: '120px' }}>
+                          <td style={{ padding: '12px 16px' }}>
                             <span style={{
                               padding: '4px 12px',
                               background: '#dcfce7',
