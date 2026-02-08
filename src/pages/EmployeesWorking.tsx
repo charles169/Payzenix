@@ -16,6 +16,11 @@ export const EmployeesWorkingPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [updateKey, setUpdateKey] = useState(0); // Force re-render
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; employee: { id: string; name: string } | null }>({
+    show: false,
+    employee: null
+  });
   const [formData, setFormData] = useState({
     employeeId: '',
     name: '',
@@ -28,26 +33,34 @@ export const EmployeesWorkingPage = () => {
     status: 'active' as 'active' | 'probation' | 'onleave' | 'inactive',
   });
 
+  const [renderError, setRenderError] = useState<Error | null>(null);
+
+  // useEffect MUST be before any early returns!
+  useEffect(() => {
+    if (user) {
+      loadEmployees();
+    }
+  }, [updateKey, user]); // Reload when updateKey changes
+
   if (!user) return null;
 
-  // Check permissions
   const canAdd = hasPermission(user.role, 'canAddEmployee');
   const canEdit = hasPermission(user.role, 'canEditEmployee');
   const canDelete = hasPermission(user.role, 'canDeleteEmployee');
   const canExport = hasPermission(user.role, 'canExportData');
 
-  useEffect(() => {
-    loadEmployees();
-  }, []);
-
   const loadEmployees = async () => {
     try {
+      console.log('🔄 loadEmployees called, updateKey:', updateKey);
       setLoading(true);
       const data = await employeeAPI.getAll();
-      setEmployees(data);
-      toast.success(`Loaded ${data.length} employees!`);
+      console.log('📦 Received from API:', data.length, 'employees');
+      const validEmployees = data.filter(emp => emp && emp._id && emp.name);
+      console.log('✅ Setting', validEmployees.length, 'valid employees');
+      setEmployees(validEmployees);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to load');
+      console.error('❌ Error loading employees:', error);
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
@@ -72,6 +85,14 @@ export const EmployeesWorkingPage = () => {
 
   const handleEditClick = (employee: Employee) => {
     console.log('🟢 EDIT CLICKED!', employee);
+    
+    // Extra safety check
+    if (!employee || !employee._id || !employee.name) {
+      console.error('Invalid employee data for edit:', employee);
+      toast.error('Cannot edit invalid employee data');
+      return;
+    }
+    
     setEditingEmployee(employee);
     setFormData({
       employeeId: employee.employeeId || '',
@@ -89,45 +110,98 @@ export const EmployeesWorkingPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🟢 FORM SUBMIT!', formData);
+    
+    if (!formData.name || !formData.email || !formData.employeeId) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
+    const saveData = {
+      ...formData,
+      salary: Number(formData.salary),
+    };
+    
+    const wasEditing = !!editingEmployee;
+    const editingId = editingEmployee?._id;
     
     try {
-      if (editingEmployee && editingEmployee._id) {
-        await employeeAPI.update(editingEmployee._id, {
-          ...formData,
-          salary: Number(formData.salary),
-        });
-        toast.success('Employee updated!');
+      console.log('🔄 Starting API call...', wasEditing ? 'UPDATE' : 'CREATE');
+      
+      if (wasEditing && editingId) {
+        const result = await employeeAPI.update(editingId, saveData);
+        console.log('✅ API UPDATE SUCCESS:', result);
+        toast.success('Employee updated!', { duration: 3000, icon: '✅' });
       } else {
-        await employeeAPI.create({
-          ...formData,
-          salary: Number(formData.salary),
-        });
-        toast.success('Employee added!');
+        const result = await employeeAPI.create(saveData);
+        console.log('✅ API CREATE SUCCESS:', result);
+        toast.success('Employee added!', { duration: 3000, icon: '✅' });
       }
+      
+      // Close form AFTER successful API call
       setShowForm(false);
+      setEditingEmployee(null);
+      
+      // Reload data immediately
+      console.log('🔄 Reloading employees data...');
       await loadEmployees();
+      
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save');
+      console.error('❌ API CALL FAILED:', error);
+      toast.error(error.message || 'Failed to save employee');
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.employee) return;
+    
+    const employeeId = deleteModal.employee.id;
+    
+    try {
+      await employeeAPI.delete(employeeId);
+      
+      // Close modal AFTER successful delete
+      setDeleteModal({ show: false, employee: null });
+      
+      toast.success('Employee deleted!', { duration: 3000, icon: '✅' });
+      
+      // Reload data immediately
+      console.log('🔄 Reloading employees after delete...');
+      await loadEmployees();
+      
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      setDeleteModal({ show: false, employee: null });
+      toast.error(error.message || 'Failed to delete employee');
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete ${name}?`)) return;
-    try {
-      await employeeAPI.delete(id);
-      toast.success('Deleted!');
-      await loadEmployees();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete');
+    if (!id || !name) {
+      console.warn('Invalid employee data for delete:', { id, name });
+      toast.error('Cannot delete: Invalid employee data');
+      return;
     }
+    setDeleteModal({ show: true, employee: { id, name } });
   };
 
-  const filteredEmployees = employees.filter((emp) =>
-    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredEmployees = employees.filter((emp) => {
+    // Safety check - skip invalid employees
+    if (!emp || !emp._id || !emp.name) {
+      return false;
+    }
+    
+    try {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        (emp.name || '').toLowerCase().includes(searchLower) ||
+        (emp.email || '').toLowerCase().includes(searchLower) ||
+        (emp.employeeId || '').toLowerCase().includes(searchLower)
+      );
+    } catch (error) {
+      console.error('Error filtering employee:', error, emp);
+      return false;
+    }
+  });
 
   if (loading) {
     return (
@@ -168,8 +242,40 @@ export const EmployeesWorkingPage = () => {
         }}
       >
         <Header />
-        <main className="p-6">
+        <main className="p-6 animate-fadeIn">
           <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
+            {/* Error Display */}
+            {renderError && (
+              <div style={{
+                padding: '16px',
+                background: '#fee2e2',
+                border: '1px solid #dc2626',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                color: '#991b1b'
+              }}>
+                <h3 style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>Render Error Detected</h3>
+                <p style={{ margin: 0, fontSize: '14px' }}>{renderError.message}</p>
+                <button
+                  onClick={() => {
+                    setRenderError(null);
+                    window.location.reload();
+                  }}
+                  style={{
+                    marginTop: '12px',
+                    padding: '8px 16px',
+                    background: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Reload Page
+                </button>
+              </div>
+            )}
+            
             {/* Header */}
             <div style={{ marginBottom: '30px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -178,8 +284,28 @@ export const EmployeesWorkingPage = () => {
                   <p style={{ color: '#666', fontSize: '14px' }}>
                     Manage your organization's workforce ({employees.length} employees)
                   </p>
+                  {/* TEST BUTTON - Remove after testing */}
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => {
+                      console.log('🔄 Manual refresh clicked');
+                      setUpdateKey(prev => prev + 1);
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      background: 'white',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    🔄 Refresh Data
+                  </button>
                   {canExport && (
                     <>
                       <button
@@ -290,32 +416,32 @@ export const EmployeesWorkingPage = () => {
 
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              <div className="stat-card animate-slideUp stagger-1" style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                 <p style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>Total Employees</p>
                 <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>{employees.length}</p>
               </div>
-              <div style={{ padding: '20px', background: '#dcfce7', borderRadius: '8px', border: '1px solid #86efac' }}>
+              <div className="stat-card animate-slideUp stagger-2" style={{ padding: '20px', background: '#dcfce7', borderRadius: '8px', border: '1px solid #86efac' }}>
                 <p style={{ color: '#166534', fontSize: '14px', marginBottom: '8px' }}>Active</p>
                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#166534', margin: 0 }}>
-                  {employees.filter(e => e.status === 'active').length}
+                  {employees.filter(e => e?.status === 'active').length}
                 </p>
               </div>
-              <div style={{ padding: '20px', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fcd34d' }}>
+              <div className="stat-card animate-slideUp stagger-3" style={{ padding: '20px', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fcd34d' }}>
                 <p style={{ color: '#92400e', fontSize: '14px', marginBottom: '8px' }}>On Probation</p>
                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#92400e', margin: 0 }}>
-                  {employees.filter(e => e.status === 'probation').length}
+                  {employees.filter(e => e?.status === 'probation').length}
                 </p>
               </div>
-              <div style={{ padding: '20px', background: '#dbeafe', borderRadius: '8px', border: '1px solid #93c5fd' }}>
+              <div className="stat-card animate-slideUp stagger-4" style={{ padding: '20px', background: '#dbeafe', borderRadius: '8px', border: '1px solid #93c5fd' }}>
                 <p style={{ color: '#1e40af', fontSize: '14px', marginBottom: '8px' }}>On Leave</p>
                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>
-                  {employees.filter(e => e.status === 'onleave').length}
+                  {employees.filter(e => e?.status === 'onleave').length}
                 </p>
               </div>
             </div>
 
             {/* Table */}
-            <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+            <div key={`employees-table-${updateKey}`} className="animate-slideUp" style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ background: '#f9fafb' }}>
                   <tr>
@@ -329,11 +455,18 @@ export const EmployeesWorkingPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredEmployees.map((employee) => (
+                  {filteredEmployees.map((employee) => {
+                    // Extra safety check
+                    if (!employee || !employee._id || !employee.name) {
+                      console.warn('Skipping invalid employee:', employee);
+                      return null;
+                    }
+                    
+                    return (
                     <tr key={employee._id} style={{ borderBottom: '1px solid #e5e7eb' }}>
                       <td style={{ padding: '12px 16px' }}>
                         <div>
-                          <p style={{ fontWeight: '500', margin: 0, marginBottom: '4px' }}>{employee.name || 'N/A'}</p>
+                          <p style={{ fontWeight: '500', margin: 0, marginBottom: '4px' }}>{employee.name}</p>
                           <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{employee.employeeId || 'N/A'}</p>
                         </div>
                       </td>
@@ -399,7 +532,14 @@ export const EmployeesWorkingPage = () => {
                           </button>
                           {canDelete && (
                             <button
-                              onClick={() => employee._id && handleDelete(employee._id, employee.name || 'Employee')}
+                              onClick={() => {
+                                if (!employee || !employee._id || !employee.name) {
+                                  console.error('Cannot delete: Invalid employee data', employee);
+                                  toast.error('Cannot delete: Invalid employee data');
+                                  return;
+                                }
+                                handleDelete(employee._id, employee.name);
+                              }}
                               style={{
                                 padding: '6px 12px',
                                 border: '1px solid #d1d5db',
@@ -428,7 +568,8 @@ export const EmployeesWorkingPage = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  }).filter(Boolean)}
                 </tbody>
               </table>
 
@@ -443,7 +584,7 @@ export const EmployeesWorkingPage = () => {
 
             {/* Form Modal */}
             {showForm && (
-              <div style={{
+              <div className="modal-backdrop" style={{
                 position: 'fixed',
                 top: 0,
                 left: 0,
@@ -456,14 +597,15 @@ export const EmployeesWorkingPage = () => {
                 zIndex: 99999,
                 padding: '20px'
               }}>
-                <div style={{
+                <div className="modal-content animate-zoomIn" style={{
                   background: 'white',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   maxWidth: '600px',
                   width: '100%',
                   maxHeight: '90vh',
                   overflow: 'auto',
-                  padding: '30px'
+                  padding: '30px',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
                 }}>
                   <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>
                     {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
@@ -536,6 +678,86 @@ export const EmployeesWorkingPage = () => {
           </div>
         </main>
       </div>
+
+      {/* Advanced Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div className="modal-backdrop" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999
+        }}>
+          <div className="modal-content animate-zoomIn" style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            minWidth: '400px',
+            maxWidth: '480px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            {/* Header */}
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: '20px', 
+                fontWeight: '600',
+                color: '#111827',
+                marginBottom: '8px'
+              }}>
+                Delete Employee
+              </h3>
+              <p style={{ 
+                margin: 0, 
+                fontSize: '14px',
+                color: '#6b7280',
+                lineHeight: '1.5'
+              }}>
+                Are you sure you want to delete <strong>{deleteModal.employee?.name}</strong>? This action cannot be undone.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setDeleteModal({ show: false, employee: null })}
+                style={{
+                  padding: '10px 20px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  background: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: '#dc2626',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

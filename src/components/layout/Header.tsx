@@ -99,7 +99,7 @@ export const Header = () => {
                   <User className="h-4 w-4 text-primary" />
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium leading-none">{user.name}</p>
+                  <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
                   <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -108,7 +108,7 @@ export const Header = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div>
-                  <p className="font-medium">{user.name}</p>
+                  <p className="font-medium">{user.name || 'User'}</p>
                   <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
               </DropdownMenuLabel>

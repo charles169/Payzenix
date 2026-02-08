@@ -34,13 +34,13 @@ import {
 import { useState } from 'react';
 
 const payslips = [
-  { month: 'January 2024', gross: 75000, deduction: 11400, net: 52450 },
-  { month: 'December 2023', gross: 75000, deduction: 11400, net: 52450 },
-  { month: 'November 2023', gross: 72000, deduction: 10944, net: 50400 },
+  { month: 'January 2026', gross: 75000, deduction: 11400, net: 52450 },
+  { month: 'December 2025', gross: 75000, deduction: 11400, net: 52450 },
+  { month: 'November 2025', gross: 72000, deduction: 10944, net: 50400 },
 ];
 
 export const MyPayslipsPage = () => {
-  const [year, setYear] = useState('2024');
+  const [year, setYear] = useState('2026');
   const [activePayslip, setActivePayslip] = useState<any>(null);
 
   return (
@@ -59,6 +59,8 @@ export const MyPayslipsPage = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
                 <SelectItem value="2024">2024</SelectItem>
                 <SelectItem value="2023">2023</SelectItem>
               </SelectContent>

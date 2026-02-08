@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { payrollAPI, employeeAPI, Payroll, Employee } from '@/services/api';
 import toast from 'react-hot-toast';
 import { Download, IndianRupee, Calculator, FileText, CheckCircle, Clock } from 'lucide-react';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Header } from '@/components/layout/Header';
 import { generatePayslipPDF } from '@/utils/pdfGenerator';
 import { downloadPayrollPDF } from '@/utils/downloadUtils';
 
@@ -10,7 +12,8 @@ export const PayrollSimplePage = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState('2');
-  const [selectedYear, setSelectedYear] = useState('2024');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -19,14 +22,30 @@ export const PayrollSimplePage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Loading payroll data from API...');
+      console.log('🔑 Token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+      
       const [payrollData, employeeData] = await Promise.all([
         payrollAPI.getAll(),
         employeeAPI.getAll()
       ]);
-      setPayrolls(payrollData);
-      setEmployees(employeeData);
-      toast.success(`Loaded ${payrollData.length} payroll records!`);
+      
+      console.log('📊 Raw payroll data from API:', payrollData);
+      console.log('👥 Raw employee data from API:', employeeData);
+      
+      // Filter out null/invalid data
+      const validPayrolls = payrollData.filter(p => p && p._id);
+      const validEmployees = employeeData.filter(e => e && e._id && e.name);
+      
+      console.log('✅ Valid payrolls:', validPayrolls.length);
+      console.log('✅ Valid employees:', validEmployees.length);
+      console.log('🔍 Selected month:', selectedMonth, 'year:', selectedYear);
+      
+      setPayrolls(validPayrolls);
+      setEmployees(validEmployees);
+      // Don't show toast here - it's confusing when data doesn't display
     } catch (error: any) {
+      console.error('❌ Error loading data:', error);
       toast.error(error.message || 'Failed to load data');
       setPayrolls([]);
       setEmployees([]);
@@ -36,11 +55,25 @@ export const PayrollSimplePage = () => {
   };
 
   const getEmployeeName = (payroll: Payroll) => {
-    if (typeof payroll.employee === 'string') {
-      const emp = employees.find(e => e._id === payroll.employee);
-      return emp ? emp.name : payroll.employee;
+    if (!payroll || !payroll.employee) return null; // Return null for invalid payrolls
+    
+    try {
+      // If employee is an object (populated), use it directly
+      if (typeof payroll.employee === 'object' && (payroll.employee as any)._id) {
+        return (payroll.employee as any).name || null;
+      }
+      
+      // If employee is a string ID, look it up
+      if (typeof payroll.employee === 'string') {
+        const emp = employees.find(e => e && e._id === payroll.employee);
+        return emp?.name || null; // Return null if not found
+      }
+      
+      return (payroll.employee as any)?.name || null;
+    } catch (error) {
+      console.error('Error getting employee name:', error);
+      return null;
     }
-    return (payroll.employee as any)?.name || 'Unknown';
   };
 
   const handleExport = async () => {
@@ -114,10 +147,55 @@ export const PayrollSimplePage = () => {
   };
 
   const stats = {
-    totalGross: payrolls.reduce((sum, p) => sum + p.grossSalary, 0),
-    totalNet: payrolls.reduce((sum, p) => sum + p.netSalary, 0),
-    totalDeductions: payrolls.reduce((sum, p) => sum + (p.deductions.pf + p.deductions.esi + p.deductions.tax + p.deductions.other), 0),
-    processed: payrolls.filter(p => p.status === 'processed').length,
+    totalGross: payrolls.reduce((sum, p) => sum + (p?.grossSalary || 0), 0),
+    totalNet: payrolls.reduce((sum, p) => sum + (p?.netSalary || 0), 0),
+    totalDeductions: payrolls.reduce((sum, p) => {
+      const deductions = p?.deductions as any || {};
+      return sum + (deductions.pf || 0) + (deductions.esi || 0) + (deductions.tax || 0) + (deductions.other || 0);
+    }, 0),
+    processed: payrolls.filter(p => p?.status === 'processed').length,
+  };
+
+  // Filter payrolls by selected month and year AND filter out deleted employees
+  console.log('🔍 Starting filter - payrolls:', payrolls.length, 'employees:', employees.length);
+  
+  // Don't filter if employees haven't loaded yet
+  if (employees.length === 0 && payrolls.length > 0) {
+    console.warn('⚠️ Employees not loaded yet, showing empty list');
+  }
+  
+  const filteredPayrolls = payrolls.filter(p => {
+    if (!p || !p._id) return false;
+    
+    // Skip payrolls with deleted employees (only if employees are loaded)
+    if (employees.length > 0) {
+      const employeeName = getEmployeeName(p);
+      if (!employeeName) {
+        console.warn('⚠️ Skipping payroll with deleted employee:', p._id, 'employee ref:', p.employee);
+        return false;
+      }
+    }
+    
+    // Apply month/year filter
+    const monthMatch = p.month === parseInt(selectedMonth);
+    const yearMatch = p.year === parseInt(selectedYear);
+    
+    console.log(`🔍 Payroll ${p._id}: month=${p.month} (selected=${selectedMonth}, match=${monthMatch}), year=${p.year} (selected=${selectedYear}, match=${yearMatch})`);
+    
+    return monthMatch && yearMatch;
+  });
+  
+  console.log('✅ Filtered payrolls:', filteredPayrolls.length, 'out of', payrolls.length);
+
+  // Calculate stats for filtered payrolls
+  const filteredStats = {
+    totalGross: filteredPayrolls.reduce((sum, p) => sum + (p?.grossSalary || 0), 0),
+    totalNet: filteredPayrolls.reduce((sum, p) => sum + (p?.netSalary || 0), 0),
+    totalDeductions: filteredPayrolls.reduce((sum, p) => {
+      const deductions = p?.deductions as any || {};
+      return sum + (deductions.pf || 0) + (deductions.esi || 0) + (deductions.tax || 0) + (deductions.other || 0);
+    }, 0),
+    processed: filteredPayrolls.filter(p => p?.status === 'processed').length,
   };
 
   if (loading) {
@@ -129,7 +207,22 @@ export const PayrollSimplePage = () => {
   }
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="min-h-screen bg-background">
+      <div 
+        onMouseEnter={() => setSidebarCollapsed(false)}
+        onMouseLeave={() => setSidebarCollapsed(true)}
+      >
+        <Sidebar />
+      </div>
+      <div 
+        style={{ 
+          marginLeft: sidebarCollapsed ? '80px' : '280px',
+          transition: 'margin-left 0.3s ease-in-out'
+        }}
+      >
+        <Header />
+        <main className="p-6 animate-fadeIn">
+          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '30px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -173,9 +266,30 @@ export const PayrollSimplePage = () => {
                 fontSize: '14px'
               }}
             >
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
               <option value="2024">2024</option>
               <option value="2023">2023</option>
             </select>
+            <button
+              onClick={handleProcessPayroll}
+              style={{
+                padding: '8px 16px',
+                background: '#16a34a',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Calculator style={{ width: '16px', height: '16px' }} />
+              Process Payroll
+            </button>
             <button
               onClick={handleExport}
               style={{
@@ -222,10 +336,10 @@ export const PayrollSimplePage = () => {
             <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Gross Salary</p>
           </div>
           <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
-            ₹{(stats.totalGross / 100000).toFixed(2)}L
+            ₹{(filteredStats.totalGross / 100000).toFixed(2)}L
           </p>
           <p style={{ fontSize: '12px', margin: '4px 0 0 0', opacity: 0.8 }}>
-            {employees.length} employees
+            {filteredPayrolls.length} employees
           </p>
         </div>
 
@@ -235,7 +349,7 @@ export const PayrollSimplePage = () => {
             <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Total Deductions</p>
           </div>
           <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
-            ₹{(stats.totalDeductions / 1000).toFixed(1)}K
+            ₹{(filteredStats.totalDeductions / 1000).toFixed(1)}K
           </p>
           <p style={{ fontSize: '12px', margin: '4px 0 0 0', opacity: 0.8 }}>
             PF + ESI + TDS + PT
@@ -248,7 +362,7 @@ export const PayrollSimplePage = () => {
             <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Net Payable</p>
           </div>
           <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
-            ₹{(stats.totalNet / 100000).toFixed(2)}L
+            ₹{(filteredStats.totalNet / 100000).toFixed(2)}L
           </p>
           <p style={{ fontSize: '12px', margin: '4px 0 0 0', opacity: 0.8 }}>
             After all deductions
@@ -261,7 +375,7 @@ export const PayrollSimplePage = () => {
             <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Processed</p>
           </div>
           <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
-            {stats.processed}
+            {filteredStats.processed}
           </p>
           <p style={{ fontSize: '12px', margin: '4px 0 0 0', opacity: 0.8 }}>
             Payroll records
@@ -272,10 +386,10 @@ export const PayrollSimplePage = () => {
       {/* Deductions Breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
         {[
-          { label: 'PF Contribution', value: payrolls.reduce((s, p) => s + p.deductions.pf, 0), color: '#667eea' },
-          { label: 'ESI Contribution', value: payrolls.reduce((s, p) => s + p.deductions.esi, 0), color: '#4facfe' },
-          { label: 'TDS Deduction', value: payrolls.reduce((s, p) => s + p.deductions.tax, 0), color: '#f093fb' },
-          { label: 'Other Deductions', value: payrolls.reduce((s, p) => s + p.deductions.other, 0), color: '#43e97b' },
+          { label: 'PF Contribution', value: filteredPayrolls.reduce((s, p) => s + (p?.deductions?.pf || 0), 0), color: '#667eea' },
+          { label: 'ESI Contribution', value: filteredPayrolls.reduce((s, p) => s + (p?.deductions?.esi || 0), 0), color: '#4facfe' },
+          { label: 'TDS Deduction', value: filteredPayrolls.reduce((s, p) => s + (p?.deductions?.tax || 0), 0), color: '#f093fb' },
+          { label: 'Other Deductions', value: filteredPayrolls.reduce((s, p) => s + (p?.deductions?.other || 0), 0), color: '#43e97b' },
         ].map((item) => (
           <div key={item.label} style={{ padding: '20px', background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -308,81 +422,101 @@ export const PayrollSimplePage = () => {
             </tr>
           </thead>
           <tbody>
-            {payrolls.map((payroll) => {
-              const totalDeductions = payroll.deductions.pf + payroll.deductions.esi + payroll.deductions.tax + payroll.deductions.other;
-              const employeeName = getEmployeeName(payroll);
+            {filteredPayrolls.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                  No payroll records found for {new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1).toLocaleString('default', { month: 'long' })} {selectedYear}
+                </td>
+              </tr>
+            ) : (
+              filteredPayrolls.map((payroll) => {
+              if (!payroll || !payroll._id) return null;
               
-              return (
-                <tr key={payroll._id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        borderRadius: '50%', 
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
+              try {
+                const totalDeductions = (payroll.deductions?.pf || 0) + (payroll.deductions?.esi || 0) + (payroll.deductions?.tax || 0) + (payroll.deductions?.other || 0);
+                const employeeName = getEmployeeName(payroll) || 'Unknown Employee';
+                
+                const initials = employeeName.split(' ').map((n: string) => n[0] || '').join('').toUpperCase() || 'U';
+                
+                return (
+                  <tr key={payroll._id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ 
+                          width: '32px', 
+                          height: '32px', 
+                          borderRadius: '50%', 
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          {initials}
+                        </div>
+                        <div>
+                          <p style={{ fontWeight: '500', margin: 0 }}>{employeeName}</p>
+                          <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{payroll._id}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <p style={{ margin: 0 }}>{new Date(0, (payroll.month || 1) - 1).toLocaleString('default', { month: 'long' })} {payroll.year || new Date().getFullYear()}</p>
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '500' }}>
+                      ₹{(payroll.grossSalary || 0).toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', color: '#dc2626' }}>
+                      -₹{totalDeductions.toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold', color: '#10b981' }}>
+                      ₹{(payroll.netSalary || 0).toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{
+                        padding: '4px 12px',
+                        borderRadius: '12px',
                         fontSize: '12px',
-                        fontWeight: 'bold'
+                        fontWeight: '500',
+                        background: 
+                          payroll.status === 'paid' ? '#dcfce7' :
+                          payroll.status === 'processed' ? '#dbeafe' :
+                          '#fef3c7',
+                        color: 
+                          payroll.status === 'paid' ? '#166534' :
+                          payroll.status === 'processed' ? '#1e40af' :
+                          '#92400e',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
                       }}>
-                        {employeeName.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <p style={{ fontWeight: '500', margin: 0 }}>{employeeName}</p>
-                        <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{payroll._id}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <p style={{ margin: 0 }}>{new Date(0, payroll.month - 1).toLocaleString('default', { month: 'long' })} {payroll.year}</p>
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '500' }}>
-                    ₹{payroll.grossSalary.toLocaleString('en-IN')}
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', color: '#dc2626' }}>
-                    -₹{totalDeductions.toLocaleString('en-IN')}
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 'bold', color: '#10b981' }}>
-                    ₹{payroll.netSalary.toLocaleString('en-IN')}
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      background: 
-                        payroll.status === 'paid' ? '#dcfce7' :
-                        payroll.status === 'processed' ? '#dbeafe' :
-                        '#fef3c7',
-                      color: 
-                        payroll.status === 'paid' ? '#166534' :
-                        payroll.status === 'processed' ? '#1e40af' :
-                        '#92400e',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      {payroll.status === 'paid' ? <CheckCircle style={{ width: '12px', height: '12px' }} /> : <Clock style={{ width: '12px', height: '12px' }} />}
-                      {payroll.status}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
+                        {payroll.status === 'paid' ? <CheckCircle style={{ width: '12px', height: '12px' }} /> : <Clock style={{ width: '12px', height: '12px' }} />}
+                        {payroll.status || 'pending'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              } catch (error) {
+                console.error('Error rendering payroll row:', error, payroll);
+                return null;
+              }
+            }).filter(Boolean)
+            )}
           </tbody>
         </table>
 
-        {payrolls.length === 0 && (
+        {filteredPayrolls.length === 0 && payrolls.length > 0 && (
           <div style={{ padding: '60px 20px', textAlign: 'center' }}>
             <p style={{ color: '#666', fontSize: '16px', margin: 0 }}>
-              No payroll records in the database.
+              No payroll records found for {new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1).toLocaleString('default', { month: 'long' })} {selectedYear}
             </p>
           </div>
         )}
+      </div>
+          </div>
+        </main>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { useAuthStore } from '@/stores/authStore';
 import { Building2, IndianRupee, FileText, Bell, Save, Plus, Edit, Trash2, Shield } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const salaryComponents = [
   { id: 1, name: 'Basic Salary', type: 'earning', calculation: 'Fixed', taxable: true, active: true },
@@ -21,17 +22,34 @@ export const SettingsWorkingPage = () => {
   const [companyName, setCompanyName] = useState('PayZenix Technologies Pvt. Ltd.');
   const [pfEnabled, setPfEnabled] = useState(true);
   const [esiEnabled, setEsiEnabled] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
-  const showPopup = (message: string) => {
-    setModalMessage(message);
-    setShowModal(true);
+  const handleSave = () => {
+    toast.success('Settings saved successfully!', {
+      duration: 4000,
+      icon: '✅',
+    });
   };
 
-  const handleSave = () => {
-    showPopup('Settings saved successfully');
+  const handleAddComponent = () => {
+    toast.success('Add new salary component feature coming soon!', {
+      duration: 3000,
+      icon: '➕',
+    });
+  };
+
+  const handleEditComponent = (componentName: string) => {
+    toast.success(`Edit ${componentName} feature coming soon!`, {
+      duration: 3000,
+      icon: '✏️',
+    });
+  };
+
+  const handleDeleteComponent = (componentName: string) => {
+    toast.error(`Delete ${componentName}? This will affect future payroll calculations.`, {
+      duration: 4000,
+      icon: '⚠️',
+    });
   };
 
   if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
@@ -81,7 +99,7 @@ export const SettingsWorkingPage = () => {
         }}
       >
         <Header />
-        <main className="p-6">
+        <main className="p-6 animate-fadeIn">
           <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
             {/* Header */}
             <div style={{ marginBottom: '30px' }}>
@@ -259,7 +277,7 @@ export const SettingsWorkingPage = () => {
                     <p style={{ color: '#666', fontSize: '14px' }}>Configure earnings and deductions for salary calculation</p>
                   </div>
                   <button
-                    onClick={() => showPopup('This will add a new salary component to your payroll structure. You can define earnings or deductions with custom calculation rules.')}
+                    onClick={handleAddComponent}
                     style={{
                       padding: '8px 16px',
                       background: '#4f46e5',
@@ -350,7 +368,7 @@ export const SettingsWorkingPage = () => {
                         <td style={{ padding: '12px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                             <button
-                              onClick={() => showPopup('Edit this salary component to modify its calculation rules, taxability, or status.')}
+                              onClick={() => handleEditComponent(component.name)}
                               style={{
                                 padding: '6px 12px',
                                 background: 'transparent',
@@ -362,7 +380,7 @@ export const SettingsWorkingPage = () => {
                               <Edit style={{ width: '16px', height: '16px' }} />
                             </button>
                             <button
-                              onClick={() => showPopup('Delete this salary component. Note: This will affect all future payroll calculations.')}
+                              onClick={() => handleDeleteComponent(component.name)}
                               style={{
                                 padding: '6px 12px',
                                 background: 'transparent',
@@ -545,141 +563,6 @@ export const SettingsWorkingPage = () => {
           </div>
         </main>
       </div>
-
-      {/* Modal Popup - Professional Design */}
-      {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          backdropFilter: 'blur(4px)',
-          animation: 'fadeIn 0.2s ease-out'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '0',
-            minWidth: '450px',
-            maxWidth: '550px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            animation: 'slideUp 0.3s ease-out',
-            overflow: 'hidden'
-          }}>
-            {/* Header with gradient */}
-            <div style={{
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-              padding: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px'
-              }}>
-                ⚙️
-              </div>
-              <div>
-                <h3 style={{ 
-                  margin: 0, 
-                  color: 'white', 
-                  fontSize: '20px', 
-                  fontWeight: '600',
-                  letterSpacing: '-0.5px'
-                }}>
-                  Settings
-                </h3>
-                <p style={{ 
-                  margin: 0, 
-                  color: 'rgba(255,255,255,0.9)', 
-                  fontSize: '13px',
-                  marginTop: '2px'
-                }}>
-                  System Configuration
-                </p>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: '28px 24px' }}>
-              <p style={{ 
-                fontSize: '15px', 
-                lineHeight: '1.6', 
-                color: '#374151',
-                margin: 0
-              }}>
-                {modalMessage}
-              </p>
-            </div>
-
-            {/* Footer */}
-            <div style={{ 
-              padding: '16px 24px', 
-              background: '#f9fafb',
-              display: 'flex', 
-              justifyContent: 'flex-end',
-              borderTop: '1px solid #e5e7eb'
-            }}>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{
-                  padding: '10px 28px',
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.3px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.5)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.4)';
-                }}
-              >
-                Got it!
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from { 
-            opacity: 0;
-            transform: translateY(20px) scale(0.95);
-          }
-          to { 
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-      `}</style>
     </div>
   );
 };

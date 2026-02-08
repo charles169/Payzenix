@@ -36,48 +36,77 @@ const seedDatabase = async () => {
 
     // Seed Users
     console.log('\n👥 Seeding users...');
-    const users = await User.insertMany(jsonData.users.map(user => ({
-      ...user,
-      _id: undefined // Let MongoDB generate new IDs
-    })));
-    console.log(`✅ ${users.length} users created!`);
+    let users, employees, payrolls, loans, auditLogs;
+    
+    try {
+      users = await User.insertMany(jsonData.users.map(user => ({
+        ...user,
+        _id: undefined // Let MongoDB generate new IDs
+      })));
+      console.log(`✅ ${users.length} users created!`);
+    } catch (err) {
+      console.error('❌ Error seeding users:', err.message);
+      throw err;
+    }
 
     // Seed Employees
     console.log('\n👨‍💼 Seeding employees...');
-    const employees = await Employee.insertMany(jsonData.employees.map(emp => ({
-      ...emp,
-      _id: undefined
-    })));
-    console.log(`✅ ${employees.length} employees created!`);
+    try {
+      employees = await Employee.insertMany(jsonData.employees.map(emp => ({
+        ...emp,
+        _id: undefined
+      })));
+      console.log(`✅ ${employees.length} employees created!`);
+      console.log('Employee IDs:', employees.map(e => e._id));
+    } catch (err) {
+      console.error('❌ Error seeding employees:', err.message);
+      throw err;
+    }
 
     // Seed Payrolls
     console.log('\n💰 Seeding payroll records...');
-    const payrolls = await Payroll.insertMany(jsonData.payrolls.map(payroll => ({
-      ...payroll,
-      _id: undefined
-    })));
-    console.log(`✅ ${payrolls.length} payroll records created!`);
+    try {
+      payrolls = await Payroll.insertMany(jsonData.payrolls.map(payroll => ({
+        ...payroll,
+        _id: undefined
+      })));
+      console.log(`✅ ${payrolls.length} payroll records created!`);
+      console.log('Payroll IDs:', payrolls.map(p => p._id));
+    } catch (err) {
+      console.error('❌ Error seeding payrolls:', err.message);
+      throw err;
+    }
 
     // Seed Loans
     console.log('\n🏦 Seeding loans...');
-    const loans = await Loan.insertMany(jsonData.loans.map(loan => ({
-      ...loan,
-      _id: undefined
-    })));
-    console.log(`✅ ${loans.length} loans created!`);
+    try {
+      loans = await Loan.insertMany(jsonData.loans.map(loan => ({
+        ...loan,
+        _id: undefined
+      })));
+      console.log(`✅ ${loans.length} loans created!`);
+    } catch (err) {
+      console.error('❌ Error seeding loans:', err.message);
+      throw err;
+    }
 
     // Seed Audit Logs
     console.log('\n📜 Seeding audit logs...');
-    const auditLogs = await AuditLog.insertMany(jsonData.auditLogs.map(log => ({
-      action: log.action,
-      user: log.user,
-      userId: log.userId,
-      details: log.details,
-      type: log.type,
-      module: log.module,
-      createdAt: new Date(log.timestamp)
-    })));
-    console.log(`✅ ${auditLogs.length} audit logs created!`);
+    try {
+      auditLogs = await AuditLog.insertMany(jsonData.auditLogs.map(log => ({
+        action: log.action,
+        user: log.user,
+        userId: log.userId,
+        details: log.details,
+        type: log.type,
+        module: log.module,
+        createdAt: new Date(log.timestamp)
+      })));
+      console.log(`✅ ${auditLogs.length} audit logs created!`);
+    } catch (err) {
+      console.error('❌ Error seeding audit logs:', err.message);
+      throw err;
+    }
 
     console.log('\n🎉 DATABASE SEEDING COMPLETE!');
     console.log('\n📊 Summary:');

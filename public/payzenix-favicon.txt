@@ -1,0 +1,26 @@
+PAYZENIX LOGO SETUP INSTRUCTIONS
+=================================
+
+To add your PayZenix logo to the application:
+
+1. Save your logo image (the phoenix design with orange/blue colors) as:
+   payzenix-logo.png
+
+2. Place it in this folder:
+   payzenix-payroll-main/public/
+
+3. The logo will automatically appear in:
+   - Sidebar (top left)
+   - Login page
+   - All pages that use the Logo component
+
+The Logo component is already configured to use:
+/payzenix-logo.png
+
+Current Status: Logo component updated ✓
+Next Step: Add payzenix-logo.png file to public folder
+
+File Requirements:
+- Format: PNG (recommended) or JPG
+- Recommended size: 400x160px or similar aspect ratio
+- Transparent background preferred for PNG

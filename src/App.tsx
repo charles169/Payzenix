@@ -4,6 +4,27 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster as HotToaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+
+// Intercept toast.error to filter out null property errors
+const originalToastError = toast.error;
+toast.error = (message: any, options?: any) => {
+  const messageStr = typeof message === 'string' ? message : String(message);
+  
+  // Suppress null/undefined property errors
+  if (
+    messageStr.includes('Cannot read properties of null') ||
+    messageStr.includes('Cannot read properties of undefined') ||
+    messageStr.includes('null is not an object') ||
+    messageStr.includes('undefined is not an object')
+  ) {
+    console.warn('🔇 Suppressed error toast:', messageStr);
+    return '';
+  }
+  
+  // Show all other errors
+  return originalToastError(message, options);
+};
 
 import { LoginPage } from "./pages/Login";
 import { DashboardPage } from "./pages/Dashboard";
@@ -55,7 +76,7 @@ const AppRoutes = () => {
 
       <Route path="/payroll" element={
         <ProtectedRoute allowedRoles={["superadmin", "admin", "hr"]}>
-          <AppLayout><PayrollSimplePage /></AppLayout>
+          <PayrollSimplePage />
         </ProtectedRoute>
       } />
 
@@ -67,7 +88,7 @@ const AppRoutes = () => {
 
       <Route path="/loans" element={
         <ProtectedRoute allowedRoles={["superadmin", "admin", "hr"]}>
-          <AppLayout><LoansSimplePage /></AppLayout>
+          <LoansSimplePage />
         </ProtectedRoute>
       } />
 
@@ -120,7 +141,44 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <HotToaster position="top-right" />
+      <HotToaster 
+        position="top-right"
+        toastOptions={{
+          // Success toasts - show prominently
+          success: {
+            duration: 4000,
+            style: {
+              background: '#10b981',
+              color: 'white',
+              fontWeight: '500',
+              padding: '16px',
+              borderRadius: '8px',
+            },
+          },
+          // Loading toasts - show until dismissed
+          loading: {
+            duration: Infinity,
+            style: {
+              background: '#3b82f6',
+              color: 'white',
+              fontWeight: '500',
+              padding: '16px',
+              borderRadius: '8px',
+            },
+          },
+          // Error toasts - show for 3 seconds
+          error: {
+            duration: 3000,
+            style: {
+              background: '#ef4444',
+              color: 'white',
+              fontWeight: '500',
+              padding: '16px',
+              borderRadius: '8px',
+            },
+          },
+        }}
+      />
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>

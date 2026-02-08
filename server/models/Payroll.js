@@ -3,7 +3,8 @@ import mongoose from 'mongoose';
 const payrollSchema = new mongoose.Schema({
   employee: {
     type: String,
-    required: true
+    required: true,
+    ref: 'Employee' // Reference to Employee model
   },
   month: {
     type: Number,

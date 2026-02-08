@@ -37,10 +37,10 @@ import { useToast } from "@/components/ui/use-toast";
 
 /* ================= DATA ================= */
 const initialPayslips = [
-  { empId: "EMP001", name: "Arun Kumar", dept: "Engineering", month: "January", year: "2024", gross: 75000, deductions: 11400, net: 52450, status: "Paid" },
-  { empId: "EMP002", name: "Priya Sharma", dept: "HR", month: "January", year: "2024", gross: 68000, deductions: 9800, net: 48200, status: "Paid" },
-  { empId: "EMP003", name: "Rahul Verma", dept: "Finance", month: "December", year: "2023", gross: 72000, deductions: 10944, net: 50400, status: "Pending" },
-  { empId: "EMP004", name: "Sneha Iyer", dept: "Marketing", month: "December", year: "2023", gross: 64000, deductions: 9000, net: 45000, status: "Pending" },
+  { empId: "EMP001", name: "Arun Kumar", dept: "Engineering", month: "January", year: "2026", gross: 75000, deductions: 11400, net: 52450, status: "Paid" },
+  { empId: "EMP002", name: "Priya Sharma", dept: "HR", month: "January", year: "2026", gross: 68000, deductions: 9800, net: 48200, status: "Paid" },
+  { empId: "EMP003", name: "Rahul Verma", dept: "Finance", month: "December", year: "2025", gross: 72000, deductions: 10944, net: 50400, status: "Pending" },
+  { empId: "EMP004", name: "Sneha Iyer", dept: "Marketing", month: "December", year: "2025", gross: 64000, deductions: 9000, net: 45000, status: "Pending" },
 ];
 
 export function PayoutsPage() {
@@ -154,6 +154,8 @@ export function PayoutsPage() {
             <SelectTrigger className="w-32"><SelectValue placeholder="Year" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
+              <SelectItem value="2026">2026</SelectItem>
+              <SelectItem value="2025">2025</SelectItem>
               <SelectItem value="2024">2024</SelectItem>
               <SelectItem value="2023">2023</SelectItem>
             </SelectContent>

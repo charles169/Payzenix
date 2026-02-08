@@ -64,7 +64,7 @@ export const DashboardPage = () => {
     return (
       <div className="space-y-6">
         <div className="page-header">
-          <h1 className="page-title">Welcome back, {user.name.split(' ')[0]}!</h1>
+          <h1 className="page-title">Welcome back, {user.name?.split(' ')[0] || 'User'}!</h1>
           <p className="page-description">
             Here's an overview of your salary and benefits
           </p>
@@ -179,7 +179,7 @@ export const DashboardPage = () => {
         <div>
           <h1 className="page-title">Dashboard</h1>
           <p className="page-description">
-            Welcome back, {user.name}. Here's what's happening today.
+            Welcome back, {user.name || 'User'}. Here's what's happening today.
           </p>
         </div>
         <Button onClick={() => {

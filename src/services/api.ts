@@ -62,6 +62,9 @@ export interface Loan {
   paidAmount?: number;
   remainingAmount: number;
   reason?: string;
+  remarks?: string;
+  approvedBy?: string;
+  approvedDate?: Date;
 }
 
 export interface Payroll {

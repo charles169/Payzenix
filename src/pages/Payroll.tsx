@@ -46,14 +46,14 @@ import { useAuthStore, hasPermission } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
 
 const months = [
-  'January 2024',
-  'February 2024',
-  'March 2024',
-  'April 2024',
+  'January 2026',
+  'February 2026',
+  'March 2026',
+  'April 2026',
 ];
 
 const payrollData = {
-  month: 'February 2024',
+  month: 'February 2026',
   status: 'draft',
   totalEmployees: 48,
   processedEmployees: 0,
@@ -75,7 +75,7 @@ const employeeSalaries = [
 ];
 
 export const PayrollPage = () => {
-  const [selectedMonth, setSelectedMonth] = useState('February 2024');
+  const [selectedMonth, setSelectedMonth] = useState('February 2026');
   const { user } = useAuthStore();
 
   const canLock = user && hasPermission(user.role, 'canLockPayroll');

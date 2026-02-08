@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Building2, FileText, Download, Calendar, CheckCircle, AlertCircle, Clock } from 'lucide-react';
-import { downloadComplianceChallans } from '@/utils/downloadUtils';
+import { downloadComplianceChallans, downloadPFChallan, downloadESIChallan, downloadTDSChallan, downloadPTChallan } from '@/utils/downloadUtils';
 import { payrollAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 
@@ -87,7 +87,7 @@ export const ComplianceWorkingPage = () => {
         }}
       >
         <Header />
-        <main className="p-6">
+        <main className="p-6 animate-fadeIn">
           <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -98,18 +98,17 @@ export const ComplianceWorkingPage = () => {
               <button
                 onClick={async () => {
                   try {
-                    showPopup('⏳ Generating compliance challans...\n\nPlease wait while we generate:\n• PF Challan\n• ESI Challan\n• TDS Challan\n• PT Challan');
+                    const loadingToast = toast.loading('Generating compliance challans...');
                     
                     await downloadComplianceChallans(payrolls);
                     
                     setTimeout(() => {
-                      setShowModal(false);
+                      toast.dismiss(loadingToast);
                       toast.success('All 4 challans downloaded successfully!');
                     }, 2000);
                   } catch (error) {
                     console.error('Error downloading challans:', error);
                     toast.error('Failed to download challans');
-                    setShowModal(false);
                   }
                 }}
                 style={{
@@ -198,7 +197,19 @@ export const ComplianceWorkingPage = () => {
                       <span style={{ fontWeight: '500', color: data.status === 'due_soon' ? '#dc2626' : '#000' }}>{data.dueDate}</span>
                     </div>
                     <button
-                      onClick={() => showPopup(`Generating ${data.name} challan...`)}
+                      onClick={async () => {
+                        const loadingToast = toast.loading(`Generating ${data.name} challan...`);
+                        setTimeout(() => {
+                          // Download the appropriate challan based on key
+                          if (key === 'pf') downloadPFChallan(payrolls);
+                          else if (key === 'esi') downloadESIChallan(payrolls);
+                          else if (key === 'tds') downloadTDSChallan(payrolls);
+                          else if (key === 'pt') downloadPTChallan(payrolls);
+                          
+                          toast.dismiss(loadingToast);
+                          toast.success(`${data.name} challan downloaded!`);
+                        }, 800);
+                      }}
                       style={{
                         padding: '6px 12px',
                         background: 'transparent',
@@ -247,7 +258,15 @@ export const ComplianceWorkingPage = () => {
                       <td style={{ padding: '12px', textAlign: 'center' }}>{getStatusBadge(row.pt)}</td>
                       <td style={{ padding: '12px 24px', textAlign: 'right' }}>
                         <button
-                          onClick={() => showPopup(`Downloading ${row.month} reports...`)}
+                          onClick={async () => {
+                            const loadingToast = toast.loading(`Downloading ${row.month} reports...`);
+                            setTimeout(async () => {
+                              // Download all 4 challans
+                              await downloadComplianceChallans(payrolls);
+                              toast.dismiss(loadingToast);
+                              toast.success(`${row.month} reports downloaded!`);
+                            }, 1000);
+                          }}
                           style={{
                             padding: '6px 12px',
                             background: 'transparent',

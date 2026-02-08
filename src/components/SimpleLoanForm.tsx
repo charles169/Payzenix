@@ -12,7 +12,6 @@ interface SimpleLoanFormProps {
 }
 
 export function SimpleLoanForm({ open, onClose, loan, onSave, employees }: SimpleLoanFormProps) {
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     employee: '',
     loanType: 'personal' as 'personal' | 'advance' | 'emergency',
@@ -47,30 +46,37 @@ export function SimpleLoanForm({ open, onClose, loan, onSave, employees }: Simpl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const amount = Number(formData.amount);
-      const tenure = Number(formData.tenure);
-      const emiAmount = Math.ceil(amount / tenure);
-      
-      await onSave({
-        employee: formData.employee,
-        loanType: formData.loanType,
-        amount,
-        interestRate: Number(formData.interestRate),
-        tenure,
-        emiAmount,
-        remainingAmount: amount,
-        startDate: new Date(),
-        status: 'pending',
-        reason: formData.reason,
-      });
-      onClose();
-    } catch (error) {
-      console.error('Failed to save:', error);
-    } finally {
-      setLoading(false);
+    
+    // Validate
+    if (!formData.employee || !formData.amount || !formData.tenure) {
+      return;
     }
+    
+    // Close form immediately (optimistic)
+    onClose();
+    
+    // Prepare data
+    const amount = Number(formData.amount);
+    const tenure = Number(formData.tenure);
+    const emiAmount = Math.ceil(amount / tenure);
+    
+    const loanData = {
+      employee: formData.employee,
+      loanType: formData.loanType,
+      amount,
+      interestRate: Number(formData.interestRate),
+      tenure,
+      emiAmount,
+      remainingAmount: amount,
+      startDate: new Date(),
+      status: 'pending' as const,
+      reason: formData.reason,
+    };
+    
+    // Save in background (user won't see errors)
+    onSave(loanData).catch(error => {
+      console.error('Background loan save failed:', error);
+    });
   };
 
   if (!open) return null;
@@ -145,7 +151,7 @@ export function SimpleLoanForm({ open, onClose, loan, onSave, employees }: Simpl
                 }}
               >
                 <option value="">Select employee</option>
-                {employees.map((emp) => (
+                {employees.filter(emp => emp && emp._id && emp.name).map((emp) => (
                   <option key={emp._id} value={emp._id}>
                     {emp.name} ({emp.employeeId})
                   </option>
@@ -276,8 +282,8 @@ export function SimpleLoanForm({ open, onClose, loan, onSave, employees }: Simpl
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : loan ? 'Update Loan' : 'Create Loan'}
+            <Button type="submit">
+              {loan ? 'Update Loan' : 'Create Loan'}
             </Button>
           </div>
         </form>

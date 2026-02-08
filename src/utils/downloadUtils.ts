@@ -127,8 +127,140 @@ export const downloadComplianceChallans = async (payrolls: any[]) => {
   }, 1500);
 };
 
+// Download individual PF Challan
+export const downloadPFChallan = (payrolls: any[]) => {
+  const totalPF = payrolls.reduce((sum, p) => sum + (p.deductions?.pf || 0), 0);
+  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  
+  const doc = new jsPDF();
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PayZenix Payroll System', 105, 15, { align: 'center' });
+  doc.setFontSize(16);
+  doc.text('Provident Fund (PF) Challan', 105, 25, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Period: ${currentMonth}`, 20, 35);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 40);
+  
+  autoTable(doc, {
+    startY: 50,
+    head: [['Component', 'Employer Share', 'Employee Share', 'Total Amount']],
+    body: [
+      ['PF Contribution (12%)', `₹${(totalPF / 2).toLocaleString('en-IN')}`, `₹${(totalPF / 2).toLocaleString('en-IN')}`, `₹${totalPF.toLocaleString('en-IN')}`],
+      ['Admin Charges (0.5%)', `₹${Math.round(totalPF * 0.005).toLocaleString('en-IN')}`, '-', `₹${Math.round(totalPF * 0.005).toLocaleString('en-IN')}`],
+      ['EDLI (0.5%)', `₹${Math.round(totalPF * 0.005).toLocaleString('en-IN')}`, '-', `₹${Math.round(totalPF * 0.005).toLocaleString('en-IN')}`],
+      ['Total Payable', '', '', `₹${Math.round(totalPF * 1.01).toLocaleString('en-IN')}`]
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [79, 70, 229] }
+  });
+  
+  doc.text(`Total Employees: ${payrolls.length}`, 20, 120);
+  doc.text('Due Date: 15th of next month', 20, 125);
+  doc.save(`PF_Challan_${currentMonth.replace(' ', '_')}.pdf`);
+};
+
+// Download individual ESI Challan
+export const downloadESIChallan = (payrolls: any[]) => {
+  const totalESI = payrolls.reduce((sum, p) => sum + (p.deductions?.esi || 0), 0);
+  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  
+  const doc = new jsPDF();
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PayZenix Payroll System', 105, 15, { align: 'center' });
+  doc.setFontSize(16);
+  doc.text('ESI Challan', 105, 25, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Period: ${currentMonth}`, 20, 35);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 40);
+  
+  autoTable(doc, {
+    startY: 50,
+    head: [['Component', 'Employer Share (3.25%)', 'Employee Share (0.75%)', 'Total Amount']],
+    body: [
+      ['ESI Contribution', `₹${Math.round(totalESI * 0.8125).toLocaleString('en-IN')}`, `₹${Math.round(totalESI * 0.1875).toLocaleString('en-IN')}`, `₹${totalESI.toLocaleString('en-IN')}`]
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [79, 70, 229] }
+  });
+  
+  doc.text(`Total Employees: ${payrolls.length}`, 20, 100);
+  doc.text('Due Date: 15th of next month', 20, 105);
+  doc.save(`ESI_Challan_${currentMonth.replace(' ', '_')}.pdf`);
+};
+
+// Download individual TDS Challan
+export const downloadTDSChallan = (payrolls: any[]) => {
+  const totalTDS = payrolls.reduce((sum, p) => sum + (p.deductions?.tax || 0), 0);
+  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  
+  const doc = new jsPDF();
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PayZenix Payroll System', 105, 15, { align: 'center' });
+  doc.setFontSize(16);
+  doc.text('TDS Challan (Form 24Q)', 105, 25, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Period: ${currentMonth}`, 20, 35);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 40);
+  
+  autoTable(doc, {
+    startY: 50,
+    head: [['Component', 'Amount']],
+    body: [
+      ['TDS on Salary (Section 192)', `₹${totalTDS.toLocaleString('en-IN')}`],
+      ['Surcharge', `₹${Math.round(totalTDS * 0.1).toLocaleString('en-IN')}`],
+      ['Total TDS Payable', `₹${Math.round(totalTDS * 1.1).toLocaleString('en-IN')}`]
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [79, 70, 229] }
+  });
+  
+  doc.text(`Total Employees: ${payrolls.length}`, 20, 110);
+  doc.text('Due Date: 7th of next month', 20, 115);
+  doc.save(`TDS_Challan_${currentMonth.replace(' ', '_')}.pdf`);
+};
+
+// Download individual PT Challan
+export const downloadPTChallan = (payrolls: any[]) => {
+  const totalPT = payrolls.reduce((sum, p) => sum + (p.deductions?.pt || 0), 0);
+  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  
+  const doc = new jsPDF();
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PayZenix Payroll System', 105, 15, { align: 'center' });
+  doc.setFontSize(16);
+  doc.text('Professional Tax Challan', 105, 25, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Period: ${currentMonth}`, 20, 35);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 40);
+  
+  autoTable(doc, {
+    startY: 50,
+    head: [['Component', 'Amount']],
+    body: [
+      ['Professional Tax', `₹${totalPT.toLocaleString('en-IN')}`]
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [79, 70, 229] }
+  });
+  
+  doc.text(`Total Employees: ${payrolls.length}`, 20, 90);
+  doc.text('Due Date: 20th of next month', 20, 95);
+  doc.save(`PT_Challan_${currentMonth.replace(' ', '_')}.pdf`);
+};
+
 // Download Employees as PDF
 export const downloadEmployeesPDF = (employees: any[]) => {
+  // Filter out invalid employees
+  const validEmployees = employees.filter(emp => emp && emp._id && emp.name);
+  
   const doc = new jsPDF();
   
   // Header
@@ -138,9 +270,9 @@ export const downloadEmployeesPDF = (employees: any[]) => {
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, 22, { align: 'center' });
-  doc.text(`Total Employees: ${employees.length}`, 105, 27, { align: 'center' });
+  doc.text(`Total Employees: ${validEmployees.length}`, 105, 27, { align: 'center' });
   
-  const tableData = employees.map(emp => [
+  const tableData = validEmployees.map(emp => [
     emp.employeeId || 'N/A',
     emp.name || 'N/A',
     emp.department || 'N/A',
@@ -174,8 +306,11 @@ export const downloadEmployeesPDF = (employees: any[]) => {
 
 // Download Employees as CSV
 export const downloadEmployeesCSV = (employees: any[]) => {
+  // Filter out invalid employees
+  const validEmployees = employees.filter(emp => emp && emp._id && emp.name);
+  
   const headers = ['Employee ID', 'Name', 'Email', 'Phone', 'Department', 'Designation', 'Location', 'Salary', 'Status'];
-  const rows = employees.map(emp => [
+  const rows = validEmployees.map(emp => [
     emp.employeeId || '',
     emp.name || '',
     emp.email || '',
@@ -201,6 +336,9 @@ export const downloadEmployeesCSV = (employees: any[]) => {
 
 // Download Payroll as PDF
 export const downloadPayrollPDF = (payrolls: any[]) => {
+  // Filter out invalid payrolls
+  const validPayrolls = payrolls.filter(p => p && p._id);
+  
   const doc = new jsPDF('landscape');
   
   // Header
@@ -210,20 +348,20 @@ export const downloadPayrollPDF = (payrolls: any[]) => {
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 148, 22, { align: 'center' });
-  doc.text(`Total Records: ${payrolls.length}`, 148, 27, { align: 'center' });
+  doc.text(`Total Records: ${validPayrolls.length}`, 148, 27, { align: 'center' });
   
   // Calculate totals
-  const totalGross = payrolls.reduce((sum, p) => sum + (p.grossSalary || p.basicSalary || 0), 0);
-  const totalDeductions = payrolls.reduce((sum, p) => {
+  const totalGross = validPayrolls.reduce((sum, p) => sum + (p.grossSalary || p.basicSalary || 0), 0);
+  const totalDeductions = validPayrolls.reduce((sum, p) => {
     if (p.totalDeductions) return sum + p.totalDeductions;
     if (p.deductions) {
       return sum + (p.deductions.pf || 0) + (p.deductions.esi || 0) + (p.deductions.tax || 0) + (p.deductions.other || 0);
     }
     return sum;
   }, 0);
-  const totalNet = payrolls.reduce((sum, p) => sum + (p.netSalary || 0), 0);
+  const totalNet = validPayrolls.reduce((sum, p) => sum + (p.netSalary || 0), 0);
   
-  const tableData = payrolls.map(p => {
+  const tableData = validPayrolls.map(p => {
     const deductions = p.totalDeductions || 
       ((p.deductions?.pf || 0) + (p.deductions?.esi || 0) + (p.deductions?.tax || 0) + (p.deductions?.other || 0));
     
@@ -255,7 +393,7 @@ export const downloadPayrollPDF = (payrolls: any[]) => {
     headStyles: { fillColor: [79, 70, 229], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [245, 247, 250] },
     theme: 'grid',
-    foot: [[`Total: ${payrolls.length} records`, '', `₹${totalGross.toLocaleString('en-IN')}`, `₹${totalDeductions.toLocaleString('en-IN')}`, `₹${totalNet.toLocaleString('en-IN')}`, '']],
+    foot: [[`Total: ${validPayrolls.length} records`, '', `₹${totalGross.toLocaleString('en-IN')}`, `₹${totalDeductions.toLocaleString('en-IN')}`, `₹${totalNet.toLocaleString('en-IN')}`, '']],
     footStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: 'bold' }
   });
   
@@ -273,6 +411,9 @@ export const downloadPayrollPDF = (payrolls: any[]) => {
 
 // Download Loans as PDF
 export const downloadLoansPDF = (loans: any[]) => {
+  // Filter out invalid loans
+  const validLoans = loans.filter(l => l && l._id);
+  
   const doc = new jsPDF();
   
   // Header
@@ -282,13 +423,13 @@ export const downloadLoansPDF = (loans: any[]) => {
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, 22, { align: 'center' });
-  doc.text(`Total Loans: ${loans.length}`, 105, 27, { align: 'center' });
+  doc.text(`Total Loans: ${validLoans.length}`, 105, 27, { align: 'center' });
   
   // Calculate totals
-  const totalAmount = loans.reduce((sum, loan) => sum + (loan.amount || 0), 0);
-  const totalEMI = loans.reduce((sum, loan) => sum + (loan.emi || 0), 0);
-  const approvedLoans = loans.filter(l => l.status === 'approved').length;
-  const pendingLoans = loans.filter(l => l.status === 'pending').length;
+  const totalAmount = validLoans.reduce((sum, loan) => sum + (loan.amount || 0), 0);
+  const totalEMI = validLoans.reduce((sum, loan) => sum + (loan.emiAmount || loan.emi || 0), 0);
+  const approvedLoans = validLoans.filter(l => l.status === 'approved').length;
+  const pendingLoans = validLoans.filter(l => l.status === 'pending').length;
   
   // Summary box
   doc.setFillColor(245, 247, 250);
@@ -299,14 +440,14 @@ export const downloadLoansPDF = (loans: any[]) => {
   doc.text(`Approved: ${approvedLoans}`, 20, 48);
   doc.text(`Pending: ${pendingLoans}`, 70, 48);
   
-  const tableData = loans.map(loan => [
+  const tableData = validLoans.map(loan => [
     loan.employee || loan.employeeId || 'N/A',
     loan.loanType || 'N/A',
     `₹${(loan.amount || 0).toLocaleString('en-IN')}`,
     `${loan.tenure || 0} months`,
-    `₹${(loan.emi || 0).toLocaleString('en-IN')}`,
+    `₹${(loan.emiAmount || loan.emi || 0).toLocaleString('en-IN')}`,
     loan.status || 'N/A',
-    new Date(loan.appliedDate || loan.createdAt).toLocaleDateString()
+    new Date(loan.appliedDate || loan.createdAt || Date.now()).toLocaleDateString()
   ]);
   
   autoTable(doc, {

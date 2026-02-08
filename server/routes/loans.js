@@ -16,7 +16,18 @@ router.get('/', authorize('admin', 'hr'), async (req, res) => {
       .populate('approvedBy', 'name')
       .sort({ createdAt: -1 });
     
-    res.json(loans);
+    // Filter out loans with deleted employees completely
+    // Only return loans where employee exists
+    const validLoans = loans.filter(loan => {
+      if (!loan.employee || !loan.employee._id) {
+        console.warn('⚠️ Skipping loan with deleted employee:', loan._id);
+        return false;
+      }
+      return true;
+    });
+    
+    console.log(`✅ Returning ${validLoans.length} valid loans (filtered from ${loans.length} total)`);
+    res.json(validLoans);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

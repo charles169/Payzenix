@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Payroll from '../models/Payroll.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -19,11 +20,38 @@ router.get('/', authorize('admin', 'hr'), async (req, res) => {
     if (employee) filter.employee = employee;
 
     const payrolls = await Payroll.find(filter)
-      .populate('employee', 'name employeeId department')
       .sort({ year: -1, month: -1 });
     
-    res.json(payrolls);
+    // Manually populate employee data by looking up employeeId
+    const Employee = mongoose.model('Employee');
+    const populatedPayrolls = await Promise.all(
+      payrolls.map(async (payroll) => {
+        const employee = await Employee.findOne({ employeeId: payroll.employee });
+        return {
+          ...payroll.toObject(),
+          employee: employee ? {
+            _id: employee._id,
+            employeeId: employee.employeeId,
+            name: employee.name,
+            department: employee.department
+          } : null
+        };
+      })
+    );
+    
+    // Filter out payrolls with deleted employees
+    const validPayrolls = populatedPayrolls.filter(payroll => {
+      if (!payroll.employee) {
+        console.warn('⚠️ Skipping payroll with deleted employee:', payroll._id);
+        return false;
+      }
+      return true;
+    });
+    
+    console.log(`✅ Returning ${validPayrolls.length} valid payrolls (filtered from ${payrolls.length} total)`);
+    res.json(validPayrolls);
   } catch (error) {
+    console.error('❌ Error fetching payrolls:', error);
     res.status(500).json({ message: error.message });
   }
 });

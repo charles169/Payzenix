@@ -33,23 +33,23 @@ const loanDetails = {
   emi: 5000,
   tenure: 10,
   remainingEmi: 3,
-  startDate: '2023-08-01',
+  startDate: '2025-08-01',
   status: 'active',
   interestRate: '0%',
   purpose: 'Personal needs',
 };
 
 const emiSchedule = [
-  { month: 'August 2023', emi: 5000, principal: 5000, balance: 45000, status: 'paid' },
-  { month: 'September 2023', emi: 5000, principal: 5000, balance: 40000, status: 'paid' },
-  { month: 'October 2023', emi: 5000, principal: 5000, balance: 35000, status: 'paid' },
-  { month: 'November 2023', emi: 5000, principal: 5000, balance: 30000, status: 'paid' },
-  { month: 'December 2023', emi: 5000, principal: 5000, balance: 25000, status: 'paid' },
-  { month: 'January 2024', emi: 5000, principal: 5000, balance: 20000, status: 'paid' },
-  { month: 'February 2024', emi: 5000, principal: 5000, balance: 15000, status: 'paid' },
-  { month: 'March 2024', emi: 5000, principal: 5000, balance: 10000, status: 'upcoming' },
-  { month: 'April 2024', emi: 5000, principal: 5000, balance: 5000, status: 'upcoming' },
-  { month: 'May 2024', emi: 5000, principal: 5000, balance: 0, status: 'upcoming' },
+  { month: 'August 2025', emi: 5000, principal: 5000, balance: 45000, status: 'paid' },
+  { month: 'September 2025', emi: 5000, principal: 5000, balance: 40000, status: 'paid' },
+  { month: 'October 2025', emi: 5000, principal: 5000, balance: 35000, status: 'paid' },
+  { month: 'November 2025', emi: 5000, principal: 5000, balance: 30000, status: 'paid' },
+  { month: 'December 2025', emi: 5000, principal: 5000, balance: 25000, status: 'paid' },
+  { month: 'January 2026', emi: 5000, principal: 5000, balance: 20000, status: 'paid' },
+  { month: 'February 2026', emi: 5000, principal: 5000, balance: 15000, status: 'paid' },
+  { month: 'March 2026', emi: 5000, principal: 5000, balance: 10000, status: 'upcoming' },
+  { month: 'April 2026', emi: 5000, principal: 5000, balance: 5000, status: 'upcoming' },
+  { month: 'May 2026', emi: 5000, principal: 5000, balance: 0, status: 'upcoming' },
 ];
 
 export const MyLoansPage = () => {
