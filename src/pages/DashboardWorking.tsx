@@ -136,7 +136,7 @@ export const DashboardWorkingPage = () => {
         })
         .slice(0, 3)
         .map((p: any) => ({
-          month: p.monthText,
+          monthName: p.monthText,
           employees: p.employees,
           amount: `₹${p.totalAmount.toLocaleString('en-IN')}`,
           status: 'completed'
@@ -443,7 +443,7 @@ export const DashboardWorkingPage = () => {
                     ) : (
                       recentPayrolls.map((payroll, index) => (
                         <tr key={`payroll-${index}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                          <td style={{ padding: '12px', fontWeight: '500' }}>{String(payroll.month)}</td>
+                          <td style={{ padding: '12px', fontWeight: '500' }}>{String(payroll.monthName)}</td>
                           <td style={{ padding: '12px' }}>{String(payroll.employees)}</td>
                           <td style={{ padding: '12px' }}>{String(payroll.amount)}</td>
                           <td style={{ padding: '12px' }}>
