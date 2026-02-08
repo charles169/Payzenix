@@ -18,7 +18,11 @@ export const DashboardWorkingPage = () => {
     pendingApprovals: 0,
     complianceScore: 98,
   });
-  const [recentPayrolls, setRecentPayrolls] = useState<any[]>([]);
+  const [recentPayrolls, setRecentPayrolls] = useState<any[]>([
+    { monthName: 'February 2026', employees: 12, amount: '₹8,58,550', status: 'completed' },
+    { monthName: 'January 2026', employees: 11, amount: '₹7,15,000', status: 'completed' },
+    { monthName: 'December 2025', employees: 10, amount: '₹6,50,000', status: 'completed' }
+  ]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
