@@ -118,10 +118,13 @@ export const DashboardWorkingPage = () => {
         })
         .slice(0, 3) // Take only last 3 months
         .map((p: any) => ({
-          ...p,
-          amount: `₹${p.totalAmount.toLocaleString('en-IN')}`
+          month: p.month,
+          employees: p.employees,
+          amount: `₹${p.totalAmount.toLocaleString('en-IN')}`,
+          status: p.status || 'completed'
         }));
       
+      console.log('📊 Recent payrolls:', payrollArray);
       setRecentPayrolls(payrollArray);
     } catch (error) {
       console.error('Error fetching recent payrolls:', error);
