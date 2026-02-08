@@ -430,29 +430,38 @@ export const DashboardWorkingPage = () => {
                         </td>
                       </tr>
                     ) : (
-                      recentPayrolls.map((payroll) => (
-                        <tr key={payroll.month} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                          <td style={{ padding: '12px', fontWeight: '500', width: '30%' }}>{payroll.month}</td>
-                          <td style={{ padding: '12px', width: '20%' }}>{payroll.employees}</td>
-                          <td style={{ padding: '12px', width: '25%' }}>{payroll.amount}</td>
-                          <td style={{ padding: '12px', width: '25%' }}>
-                            <span style={{
-                              padding: '4px 12px',
-                              background: '#dcfce7',
-                              color: '#166534',
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}>
-                              <CheckCircle style={{ width: '12px', height: '12px' }} />
-                              Completed
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                      recentPayrolls.map((payroll, index) => {
+                        console.log(`Row ${index}:`, payroll);
+                        return (
+                          <tr key={payroll.month} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <td style={{ padding: '12px', fontWeight: '500', width: '30%' }}>
+                              {payroll.month || 'N/A'}
+                            </td>
+                            <td style={{ padding: '12px', width: '20%' }}>
+                              {payroll.employees || 0}
+                            </td>
+                            <td style={{ padding: '12px', width: '25%' }}>
+                              {payroll.amount || '₹0'}
+                            </td>
+                            <td style={{ padding: '12px', width: '25%' }}>
+                              <span style={{
+                                padding: '4px 12px',
+                                background: '#dcfce7',
+                                color: '#166534',
+                                borderRadius: '12px',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                <CheckCircle style={{ width: '12px', height: '12px' }} />
+                                {payroll.status || 'Completed'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
