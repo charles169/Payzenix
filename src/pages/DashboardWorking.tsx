@@ -97,8 +97,15 @@ export const DashboardWorkingPage = () => {
       const payrollsByMonth = payrolls.reduce((acc: any, p: any) => {
         const key = `${p.month}-${p.year}`;
         if (!acc[key]) {
+          // Create month name manually
+          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                             'July', 'August', 'September', 'October', 'November', 'December'];
+          const monthName = monthNames[p.month - 1] || 'Unknown';
+          
           acc[key] = {
-            month: new Date(p.year, p.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+            month: `${monthName} ${p.year}`,
+            monthNum: p.month,
+            year: p.year,
             employees: 0,
             totalAmount: 0,
             status: 'completed'
@@ -112,9 +119,9 @@ export const DashboardWorkingPage = () => {
       // Convert to array and sort by date (newest first)
       const payrollArray = Object.values(payrollsByMonth)
         .sort((a: any, b: any) => {
-          const dateA = new Date(a.month);
-          const dateB = new Date(b.month);
-          return dateB.getTime() - dateA.getTime();
+          // Sort by year first, then by month
+          if (a.year !== b.year) return b.year - a.year;
+          return b.monthNum - a.monthNum;
         })
         .slice(0, 3) // Take only last 3 months
         .map((p: any) => ({
