@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { loanAPI, employeeAPI, Loan, Employee } from '@/services/api';
 import toast from 'react-hot-toast';
-import { Plus, Download, Eye, CheckCircle, XCircle, Clock, Search, FileText } from 'lucide-react';
+import { Plus, Download, Eye, CheckCircle, XCircle, Clock, Search, FileText, Wallet } from 'lucide-react';
 import { SimpleLoanForm } from '@/components/SimpleLoanForm';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
@@ -365,27 +365,45 @@ export const LoansSimplePage = () => {
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-        <div style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>Total Disbursed</p>
+        <div className="stat-card animate-slideUp stagger-1" style={{ padding: '20px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <Wallet style={{ width: '24px', height: '24px' }} />
+            <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Total Disbursed</p>
+          </div>
           <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>₹{(stats.totalDisbursed / 1000).toFixed(0)}K</p>
+          <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>{loans.length} loans</p>
         </div>
-        <div style={{ padding: '20px', background: '#dcfce7', borderRadius: '8px', border: '1px solid #86efac' }}>
-          <p style={{ color: '#166534', fontSize: '14px', marginBottom: '8px' }}>Total Recovered</p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#166534', margin: 0 }}>
+        <div className="stat-card animate-slideUp stagger-2" style={{ padding: '20px', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(240, 147, 251, 0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <CheckCircle style={{ width: '24px', height: '24px' }} />
+            <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Total Recovered</p>
+          </div>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
             ₹{(stats.totalRecovered / 1000).toFixed(0)}K
           </p>
+          <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
+            {stats.totalDisbursed > 0 ? Math.round((stats.totalRecovered / stats.totalDisbursed) * 100) : 0}% recovered
+          </p>
         </div>
-        <div style={{ padding: '20px', background: '#dbeafe', borderRadius: '8px', border: '1px solid #93c5fd' }}>
-          <p style={{ color: '#1e40af', fontSize: '14px', marginBottom: '8px' }}>Active Loans</p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>
+        <div className="stat-card animate-slideUp stagger-3" style={{ padding: '20px', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(79, 172, 254, 0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <Clock style={{ width: '24px', height: '24px' }} />
+            <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Active Loans</p>
+          </div>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
             {stats.activeLoans}
           </p>
+          <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Currently active</p>
         </div>
-        <div style={{ padding: '20px', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fcd34d' }}>
-          <p style={{ color: '#92400e', fontSize: '14px', marginBottom: '8px' }}>Pending Approval</p>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#92400e', margin: 0 }}>
+        <div className="stat-card animate-slideUp stagger-4" style={{ padding: '20px', background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(250, 112, 154, 0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <XCircle style={{ width: '24px', height: '24px' }} />
+            <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Pending Approval</p>
+          </div>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
             {stats.pendingLoans}
           </p>
+          <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Awaiting review</p>
         </div>
       </div>
 

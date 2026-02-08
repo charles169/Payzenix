@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { employeeAPI, Employee } from '@/services/api';
 import toast from 'react-hot-toast';
-import { Plus, Download, Edit, Trash2, Mail, Search, FileText } from 'lucide-react';
+import { Plus, Download, Edit, Trash2, Mail, Search, FileText, Users, CheckCircle, Clock, User } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { useAuthStore } from '@/stores/authStore';
@@ -416,27 +416,43 @@ export const EmployeesWorkingPage = () => {
 
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div className="stat-card animate-slideUp stagger-1" style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                <p style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>Total Employees</p>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>{employees.length}</p>
+              <div className="stat-card animate-slideUp stagger-1" style={{ padding: '24px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <Users style={{ width: '24px', height: '24px' }} />
+                  <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Total Employees</p>
+                </div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>{employees.length}</p>
+                <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>All employees</p>
               </div>
-              <div className="stat-card animate-slideUp stagger-2" style={{ padding: '20px', background: '#dcfce7', borderRadius: '8px', border: '1px solid #86efac' }}>
-                <p style={{ color: '#166534', fontSize: '14px', marginBottom: '8px' }}>Active</p>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#166534', margin: 0 }}>
+              <div className="stat-card animate-slideUp stagger-2" style={{ padding: '24px', background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(67, 233, 123, 0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <CheckCircle style={{ width: '24px', height: '24px' }} />
+                  <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Active</p>
+                </div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>
                   {employees.filter(e => e?.status === 'active').length}
                 </p>
+                <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Working now</p>
               </div>
-              <div className="stat-card animate-slideUp stagger-3" style={{ padding: '20px', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fcd34d' }}>
-                <p style={{ color: '#92400e', fontSize: '14px', marginBottom: '8px' }}>On Probation</p>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#92400e', margin: 0 }}>
+              <div className="stat-card animate-slideUp stagger-3" style={{ padding: '24px', background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(250, 112, 154, 0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <Clock style={{ width: '24px', height: '24px' }} />
+                  <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>On Probation</p>
+                </div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>
                   {employees.filter(e => e?.status === 'probation').length}
                 </p>
+                <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Trial period</p>
               </div>
-              <div className="stat-card animate-slideUp stagger-4" style={{ padding: '20px', background: '#dbeafe', borderRadius: '8px', border: '1px solid #93c5fd' }}>
-                <p style={{ color: '#1e40af', fontSize: '14px', marginBottom: '8px' }}>On Leave</p>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>
+              <div className="stat-card animate-slideUp stagger-4" style={{ padding: '24px', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(79, 172, 254, 0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <User style={{ width: '24px', height: '24px' }} />
+                  <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>On Leave</p>
+                </div>
+                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>
                   {employees.filter(e => e?.status === 'onleave').length}
                 </p>
+                <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Currently away</p>
               </div>
             </div>
 
