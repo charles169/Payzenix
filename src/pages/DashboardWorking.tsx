@@ -447,10 +447,16 @@ export const DashboardWorkingPage = () => {
                     ) : (
                       recentPayrolls.map((payroll, index) => (
                         <tr key={`payroll-${index}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                          <td style={{ padding: '12px', fontWeight: '500' }}>{String(payroll.monthName)}</td>
-                          <td style={{ padding: '12px' }}>{String(payroll.employees)}</td>
-                          <td style={{ padding: '12px' }}>{String(payroll.amount)}</td>
-                          <td style={{ padding: '12px' }}>
+                          <td style={{ padding: '12px', fontWeight: '500', minWidth: '150px' }}>
+                            <div style={{ display: 'block' }}>{payroll.monthName || 'TEST MONTH'}</div>
+                          </td>
+                          <td style={{ padding: '12px', minWidth: '100px' }}>
+                            <div style={{ display: 'block' }}>{payroll.employees || 0}</div>
+                          </td>
+                          <td style={{ padding: '12px', minWidth: '120px' }}>
+                            <div style={{ display: 'block' }}>{payroll.amount || '₹0'}</div>
+                          </td>
+                          <td style={{ padding: '12px', minWidth: '120px' }}>
                             <span style={{
                               padding: '4px 12px',
                               background: '#dcfce7',
