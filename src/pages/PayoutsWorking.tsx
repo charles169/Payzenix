@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/Header';
 import { Eye, Download, Pencil, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { payrollAPI } from '@/services/api';
+import { usePageFocus } from '@/hooks/usePageFocus';
 
 export const PayoutsWorkingPage = () => {
   const [payslips, setPayslips] = useState<any[]>([]);
@@ -15,10 +16,6 @@ export const PayoutsWorkingPage = () => {
   const [preview, setPreview] = useState<any>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-
-  useEffect(() => {
-    loadPayslips();
-  }, []);
 
   const loadPayslips = async () => {
     try {
@@ -35,6 +32,9 @@ export const PayoutsWorkingPage = () => {
       setLoading(false);
     }
   };
+
+  // Reload data when page becomes visible/focused
+  usePageFocus(loadPayslips, []);
 
   const getEmployeeName = (payslip: any) => {
     if (!payslip || !payslip.employee) return 'Unknown';

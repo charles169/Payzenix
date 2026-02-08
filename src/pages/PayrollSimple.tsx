@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { generatePayslipPDF } from '@/utils/pdfGenerator';
 import { downloadPayrollPDF } from '@/utils/downloadUtils';
+import { usePageFocus } from '@/hooks/usePageFocus';
 
 export const PayrollSimplePage = () => {
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
@@ -14,10 +15,6 @@ export const PayrollSimplePage = () => {
   const [selectedMonth, setSelectedMonth] = useState('2');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const loadData = async () => {
     try {
@@ -53,6 +50,9 @@ export const PayrollSimplePage = () => {
       setLoading(false);
     }
   };
+
+  // Reload data when page becomes visible/focused
+  usePageFocus(loadData, []);
 
   const getEmployeeName = (payroll: Payroll) => {
     if (!payroll || !payroll.employee) return null; // Return null for invalid payrolls

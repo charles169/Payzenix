@@ -25,6 +25,18 @@ export const DashboardWorkingPage = () => {
     }
   }, [user]);
 
+  // Refresh stats when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user && user.role !== 'employee') {
+        fetchDashboardStats();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]);
+
   const fetchDashboardStats = async () => {
     try {
       const response = await fetch('http://localhost:3001/api/dashboard/stats', {

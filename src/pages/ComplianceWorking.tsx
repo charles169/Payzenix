@@ -5,6 +5,7 @@ import { Building2, FileText, Download, Calendar, CheckCircle, AlertCircle, Cloc
 import { downloadComplianceChallans, downloadPFChallan, downloadESIChallan, downloadTDSChallan, downloadPTChallan } from '@/utils/downloadUtils';
 import { payrollAPI } from '@/services/api';
 import toast from 'react-hot-toast';
+import { usePageFocus } from '@/hooks/usePageFocus';
 
 const complianceData = {
   pf: { name: 'Provident Fund (PF)', employer: 156780, employee: 156780, total: 313560, dueDate: '15th Feb 2024', status: 'pending', filedMonths: 11, totalMonths: 12 },
@@ -26,10 +27,6 @@ export const ComplianceWorkingPage = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [payrolls, setPayrolls] = useState<any[]>([]);
 
-  useEffect(() => {
-    loadPayrolls();
-  }, []);
-
   const loadPayrolls = async () => {
     try {
       const data = await payrollAPI.getAll();
@@ -38,6 +35,9 @@ export const ComplianceWorkingPage = () => {
       console.error('Error loading payrolls:', error);
     }
   };
+
+  // Reload data when page becomes visible/focused
+  usePageFocus(loadPayrolls, []);
 
   const showPopup = (message: string) => {
     setModalMessage(message);
