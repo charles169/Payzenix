@@ -124,12 +124,17 @@ export const DashboardWorkingPage = () => {
           return b.monthNum - a.monthNum;
         })
         .slice(0, 3) // Take only last 3 months
-        .map((p: any) => ({
-          month: p.month,
-          employees: p.employees,
-          amount: `₹${p.totalAmount.toLocaleString('en-IN')}`,
-          status: p.status || 'completed'
-        }));
+        .map((p: any) => {
+          console.log('🔍 Mapping payroll object:', p);
+          const result = {
+            month: p.month,
+            employees: p.employees,
+            amount: `₹${p.totalAmount.toLocaleString('en-IN')}`,
+            status: p.status || 'completed'
+          };
+          console.log('✅ Result object:', result);
+          return result;
+        });
       
       console.log('📊 Recent payrolls:', payrollArray);
       setRecentPayrolls(payrollArray);
