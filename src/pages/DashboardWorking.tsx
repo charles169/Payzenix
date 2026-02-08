@@ -14,14 +14,17 @@ export const DashboardWorkingPage = () => {
     totalEmployees: 0,
     activeEmployees: 0,
     payrollAmount: '0',
+    payrollEmployees: 0,
     pendingApprovals: 0,
     complianceScore: 98,
   });
+  const [recentPayrolls, setRecentPayrolls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user && user.role !== 'employee') {
       fetchDashboardStats();
+      fetchRecentPayrolls();
     }
   }, [user]);
 
@@ -30,6 +33,7 @@ export const DashboardWorkingPage = () => {
     const handleVisibilityChange = () => {
       if (!document.hidden && user && user.role !== 'employee') {
         fetchDashboardStats();
+        fetchRecentPayrolls();
       }
     };
 
@@ -46,13 +50,30 @@ export const DashboardWorkingPage = () => {
       });
       const data = await response.json();
       
-      // Calculate payroll amount (approximate)
-      const payrollAmount = (data.totalEmployees * 65000 / 100000).toFixed(1);
+      // Fetch actual payroll data for current month
+      const payrollResponse = await fetch('http://localhost:3001/api/payroll', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const payrolls = await payrollResponse.json();
+      
+      // Calculate actual payroll amount for current month (February 2026)
+      const currentMonth = 2;
+      const currentYear = 2026;
+      const currentMonthPayrolls = payrolls.filter((p: any) => 
+        p.month === currentMonth && p.year === currentYear
+      );
+      const totalPayrollAmount = currentMonthPayrolls.reduce((sum: number, p: any) => 
+        sum + (p.netSalary || 0), 0
+      );
+      const payrollAmountInLakhs = (totalPayrollAmount / 100000).toFixed(2);
       
       setStats({
         totalEmployees: data.totalEmployees || 0,
         activeEmployees: data.activeEmployees || 0,
-        payrollAmount: payrollAmount + 'L',
+        payrollAmount: payrollAmountInLakhs + 'L',
+        payrollEmployees: currentMonthPayrolls.length,
         pendingApprovals: data.activeLoans || 0,
         complianceScore: 98,
       });
@@ -60,6 +81,51 @@ export const DashboardWorkingPage = () => {
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       setLoading(false);
+    }
+  };
+
+  const fetchRecentPayrolls = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/payroll', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const payrolls = await response.json();
+      
+      // Group payrolls by month/year and count unique employees
+      const payrollsByMonth = payrolls.reduce((acc: any, p: any) => {
+        const key = `${p.month}-${p.year}`;
+        if (!acc[key]) {
+          acc[key] = {
+            month: new Date(p.year, p.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+            employees: 0,
+            totalAmount: 0,
+            status: 'completed'
+          };
+        }
+        acc[key].employees += 1;
+        acc[key].totalAmount += p.netSalary || 0;
+        return acc;
+      }, {});
+      
+      // Convert to array and sort by date (newest first)
+      const payrollArray = Object.values(payrollsByMonth)
+        .sort((a: any, b: any) => {
+          const dateA = new Date(a.month);
+          const dateB = new Date(b.month);
+          return dateB.getTime() - dateA.getTime();
+        })
+        .slice(0, 3) // Take only last 3 months
+        .map((p: any) => ({
+          ...p,
+          amount: `₹${p.totalAmount.toLocaleString('en-IN')}`
+        }));
+      
+      setRecentPayrolls(payrollArray);
+    } catch (error) {
+      console.error('Error fetching recent payrolls:', error);
+      setRecentPayrolls([]);
     }
   };
 
@@ -187,12 +253,6 @@ export const DashboardWorkingPage = () => {
   }
 
   // Admin/HR Dashboard
-  const recentPayrolls = [
-    { month: 'February 2026', employees: stats.activeEmployees, amount: `₹${(stats.activeEmployees * 65000).toLocaleString('en-IN')}`, status: 'completed' },
-    { month: 'January 2026', employees: stats.activeEmployees - 1, amount: `₹${((stats.activeEmployees - 1) * 63000).toLocaleString('en-IN')}`, status: 'completed' },
-    { month: 'December 2025', employees: stats.activeEmployees - 2, amount: `₹${((stats.activeEmployees - 2) * 62000).toLocaleString('en-IN')}`, status: 'completed' },
-  ];
-
   const pendingActions = [
     { title: 'Process March payroll', dueIn: '3 days', priority: 'high' },
     { title: 'Submit PF challan', dueIn: '5 days', priority: 'medium' },
@@ -290,7 +350,7 @@ export const DashboardWorkingPage = () => {
                   <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Payroll This Month</p>
                 </div>
                 <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>₹{stats.payrollAmount}</p>
-                <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>{stats.activeEmployees} employees</p>
+                <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>{stats.payrollEmployees} employees</p>
               </div>
 
               <div style={{ padding: '24px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
