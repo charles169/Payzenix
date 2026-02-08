@@ -46,6 +46,7 @@ const employeeNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
+  { label: 'Role Permissions', icon: Shield, path: '/role-permissions', roles: ['superadmin', 'admin'] },
   { label: 'Audit Logs', icon: ShieldCheck, path: '/audit-logs', roles: ['superadmin', 'admin'] },
   { label: 'Settings', icon: Settings, path: '/settings', roles: ['superadmin', 'admin'] },
 ];

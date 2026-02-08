@@ -45,6 +45,7 @@ import { ProfilePage } from "./pages/Profile";
 import { MyPayslipsPage } from "./pages/MyPayslips";
 import { MyLoansPage } from "./pages/MyLoans";
 import { AuditLogsPage } from "./pages/AuditLogs";
+import { RolePermissionsPage } from "./pages/RolePermissions";
 import NotFound from "./pages/NotFound";
 import { TestPage } from "./pages/TestPage";
 import { EmployeesSimplePage } from "./pages/EmployeesSimple";
@@ -125,6 +126,12 @@ const AppRoutes = () => {
       <Route path="/audit-logs" element={
         <ProtectedRoute allowedRoles={["superadmin", "admin"]}>
           <AuditLogsPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/role-permissions" element={
+        <ProtectedRoute allowedRoles={["superadmin", "admin"]}>
+          <RolePermissionsPage />
         </ProtectedRoute>
       } />
 
