@@ -406,39 +406,47 @@ export const DashboardWorkingPage = () => {
                   </button>
                 </div>
 
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Month</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Employees</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Amount</th>
-                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Status</th>
+                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600', width: '30%' }}>Month</th>
+                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600', width: '20%' }}>Employees</th>
+                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600', width: '25%' }}>Amount</th>
+                      <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600', width: '25%' }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recentPayrolls.map((payroll) => (
-                      <tr key={payroll.month} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                        <td style={{ padding: '12px', fontWeight: '500' }}>{payroll.month}</td>
-                        <td style={{ padding: '12px' }}>{payroll.employees}</td>
-                        <td style={{ padding: '12px' }}>{payroll.amount}</td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{
-                            padding: '4px 12px',
-                            background: '#dcfce7',
-                            color: '#166534',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <CheckCircle style={{ width: '12px', height: '12px' }} />
-                            Completed
-                          </span>
+                    {recentPayrolls.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                          No payroll data available
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      recentPayrolls.map((payroll) => (
+                        <tr key={payroll.month} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                          <td style={{ padding: '12px', fontWeight: '500', width: '30%' }}>{payroll.month}</td>
+                          <td style={{ padding: '12px', width: '20%' }}>{payroll.employees}</td>
+                          <td style={{ padding: '12px', width: '25%' }}>{payroll.amount}</td>
+                          <td style={{ padding: '12px', width: '25%' }}>
+                            <span style={{
+                              padding: '4px 12px',
+                              background: '#dcfce7',
+                              color: '#166534',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <CheckCircle style={{ width: '12px', height: '12px' }} />
+                              Completed
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
