@@ -632,7 +632,7 @@ tbody tr {
   transition: all 0.3s ease;
 }
 
-tbody tr::before {
+/* tbody tr::before {
   content: '';
   position: absolute;
   left: 0;
@@ -646,7 +646,7 @@ tbody tr::before {
 
 tbody tr:hover::before {
   transform: scaleY(1);
-}
+} */
 
 /* Modal Backdrop Blur */
 .modal-backdrop {

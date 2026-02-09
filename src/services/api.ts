@@ -8,6 +8,8 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const token = getToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };

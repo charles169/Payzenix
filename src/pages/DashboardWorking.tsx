@@ -45,30 +45,36 @@ export const DashboardWorkingPage = () => {
     try {
       const response = await fetch('http://localhost:3001/api/dashboard/stats', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
       });
       const data = await response.json();
-      
+
       // Fetch actual payroll data for current month
       const payrollResponse = await fetch('http://localhost:3001/api/payroll', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
       });
       const payrolls = await payrollResponse.json();
-      
+
       // Calculate actual payroll amount for current month (February 2026)
       const currentMonth = 2;
       const currentYear = 2026;
-      const currentMonthPayrolls = payrolls.filter((p: any) => 
+      const currentMonthPayrolls = payrolls.filter((p: any) =>
         p.month === currentMonth && p.year === currentYear
       );
-      const totalPayrollAmount = currentMonthPayrolls.reduce((sum: number, p: any) => 
+      const totalPayrollAmount = currentMonthPayrolls.reduce((sum: number, p: any) =>
         sum + (p.netSalary || 0), 0
       );
       const payrollAmountInLakhs = (totalPayrollAmount / 100000).toFixed(2);
-      
+
       setStats({
         totalEmployees: data.totalEmployees || 0,
         activeEmployees: data.activeEmployees || 0,
@@ -88,15 +94,18 @@ export const DashboardWorkingPage = () => {
     try {
       const response = await fetch('http://localhost:3001/api/payroll', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store'
       });
       const payrolls = await response.json();
-      
+
       // Month names for formatting
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                         'July', 'August', 'September', 'October', 'November', 'December'];
-      
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+
       // Format and group payrolls by month/year
       const grouped: any = {};
       payrolls.forEach((p: any) => {
@@ -113,7 +122,7 @@ export const DashboardWorkingPage = () => {
         grouped[key].employees += 1;
         grouped[key].totalAmount += (p.netSalary || 0);
       });
-      
+
       // Convert to array, sort by date (newest first), and take top 3
       const payrollArray = Object.values(grouped)
         .sort((a: any, b: any) => {
@@ -127,7 +136,7 @@ export const DashboardWorkingPage = () => {
           amount: `₹${p.totalAmount.toLocaleString('en-IN')}`,
           status: 'completed'
         }));
-      
+
       setRecentPayrolls(payrollArray);
     } catch (error) {
       console.error('Error fetching recent payrolls:', error);
@@ -148,14 +157,14 @@ export const DashboardWorkingPage = () => {
   if (isEmployee) {
     return (
       <div className="min-h-screen bg-background">
-        <div 
+        <div
           onMouseEnter={() => setSidebarCollapsed(false)}
           onMouseLeave={() => setSidebarCollapsed(true)}
         >
           <Sidebar />
         </div>
-        <div 
-          style={{ 
+        <div
+          style={{
             marginLeft: sidebarCollapsed ? '80px' : '280px',
             transition: 'margin-left 0.3s ease-in-out'
           }}
@@ -268,14 +277,14 @@ export const DashboardWorkingPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div 
+        <div
           onMouseEnter={() => setSidebarCollapsed(false)}
           onMouseLeave={() => setSidebarCollapsed(true)}
         >
           <Sidebar />
         </div>
-        <div 
-          style={{ 
+        <div
+          style={{
             marginLeft: sidebarCollapsed ? '80px' : '280px',
             transition: 'margin-left 0.3s ease-in-out'
           }}
@@ -291,14 +300,14 @@ export const DashboardWorkingPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div 
+      <div
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
         <Sidebar />
       </div>
-      <div 
-        style={{ 
+      <div
+        style={{
           marginLeft: sidebarCollapsed ? '80px' : '280px',
           transition: 'margin-left 0.3s ease-in-out'
         }}
@@ -410,45 +419,16 @@ export const DashboardWorkingPage = () => {
                 </div>
 
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', whiteSpace: 'nowrap' }}>Month</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', whiteSpace: 'nowrap' }}>Employees</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', whiteSpace: 'nowrap' }}>Amount</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600', whiteSpace: 'nowrap' }}>Status</th>
+                      <tr style={{ borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                        <th style={{ width: '30%', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>Month</th>
+                        <th style={{ width: '20%', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>Employees</th>
+                        <th style={{ width: '25%', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>Amount</th>
+                        <th style={{ width: '25%', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Test row with hardcoded data */}
-                      <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                        <td style={{ padding: '12px 16px', fontWeight: '500', whiteSpace: 'nowrap', background: '#fff' }}>
-                          TEST MONTH
-                        </td>
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', background: '#fff' }}>
-                          99
-                        </td>
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', background: '#fff' }}>
-                          ₹99,999
-                        </td>
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', background: '#fff' }}>
-                          <span style={{
-                            padding: '4px 12px',
-                            background: '#dcfce7',
-                            color: '#166534',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <CheckCircle style={{ width: '12px', height: '12px' }} />
-                            Test
-                          </span>
-                        </td>
-                      </tr>
-                      
                       {recentPayrolls.length === 0 ? (
                         <tr>
                           <td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
@@ -456,41 +436,35 @@ export const DashboardWorkingPage = () => {
                           </td>
                         </tr>
                       ) : (
-                        recentPayrolls.map((payroll, index) => {
-                          const monthText = payroll.monthName || 'N/A';
-                          const empCount = payroll.employees || 0;
-                          const amountText = payroll.amount || '₹0';
-                          
-                          return (
-                            <tr key={`payroll-row-${index}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                              <td style={{ padding: '12px 16px', fontWeight: '500', whiteSpace: 'nowrap' }}>
-                                <span>{monthText}</span>
-                              </td>
-                              <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                                <span>{empCount}</span>
-                              </td>
-                              <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                                <span>{amountText}</span>
-                              </td>
-                              <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                                <span style={{
-                                  padding: '4px 12px',
-                                  background: '#dcfce7',
-                                  color: '#166534',
-                                  borderRadius: '12px',
-                                  fontSize: '12px',
-                                  fontWeight: '500',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}>
-                                  <CheckCircle style={{ width: '12px', height: '12px' }} />
-                                  Completed
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })
+                        recentPayrolls.map((payroll, index) => (
+                          <tr key={`payroll-${index}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <td style={{ padding: '16px', fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                              {payroll.monthName || 'N/A'}
+                            </td>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
+                              {payroll.employees || 0}
+                            </td>
+                            <td style={{ padding: '16px', fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                              {payroll.amount || '₹0'}
+                            </td>
+                            <td style={{ padding: '16px' }}>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '4px 10px',
+                                borderRadius: '9999px',
+                                background: '#dcfce7',
+                                color: '#166534',
+                                fontSize: '12px',
+                                fontWeight: '500'
+                              }}>
+                                <CheckCircle size={14} />
+                                Completed
+                              </span>
+                            </td>
+                          </tr>
+                        ))
                       )}
                     </tbody>
                   </table>
@@ -570,128 +544,130 @@ export const DashboardWorkingPage = () => {
                 </div>
               ))}
             </div>
-          </div>
-        </main>
-      </div>
+          </div >
+        </main >
+      </div >
 
       {/* Modal Popup - Professional Design */}
-      {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          backdropFilter: 'blur(4px)',
-          animation: 'fadeIn 0.2s ease-out'
-        }}>
+      {
+        showModal && (
           <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '0',
-            minWidth: '450px',
-            maxWidth: '550px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            animation: 'slideUp 0.3s ease-out',
-            overflow: 'hidden'
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            backdropFilter: 'blur(4px)',
+            animation: 'fadeIn 0.2s ease-out'
           }}>
-            {/* Header with gradient */}
             <div style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              padding: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
+              background: 'white',
+              borderRadius: '16px',
+              padding: '0',
+              minWidth: '450px',
+              maxWidth: '550px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              animation: 'slideUp 0.3s ease-out',
+              overflow: 'hidden'
             }}>
+              {/* Header with gradient */}
               <div style={{
-                width: '48px',
-                height: '48px',
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                padding: '24px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px'
+                gap: '12px'
               }}>
-                ℹ️
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  background: 'rgba(255,255,255,0.2)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '24px'
+                }}>
+                  ℹ️
+                </div>
+                <div>
+                  <h3 style={{
+                    margin: 0,
+                    color: 'white',
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    letterSpacing: '-0.5px'
+                  }}>
+                    PayZenix
+                  </h3>
+                  <p style={{
+                    margin: 0,
+                    color: 'rgba(255,255,255,0.9)',
+                    fontSize: '13px',
+                    marginTop: '2px'
+                  }}>
+                    Payroll Management System
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 style={{ 
-                  margin: 0, 
-                  color: 'white', 
-                  fontSize: '20px', 
-                  fontWeight: '600',
-                  letterSpacing: '-0.5px'
+
+              {/* Content */}
+              <div style={{ padding: '28px 24px' }}>
+                <p style={{
+                  fontSize: '15px',
+                  lineHeight: '1.6',
+                  color: '#374151',
+                  margin: 0
                 }}>
-                  PayZenix
-                </h3>
-                <p style={{ 
-                  margin: 0, 
-                  color: 'rgba(255,255,255,0.9)', 
-                  fontSize: '13px',
-                  marginTop: '2px'
-                }}>
-                  Payroll Management System
+                  {modalMessage}
                 </p>
               </div>
-            </div>
 
-            {/* Content */}
-            <div style={{ padding: '28px 24px' }}>
-              <p style={{ 
-                fontSize: '15px', 
-                lineHeight: '1.6', 
-                color: '#374151',
-                margin: 0
+              {/* Footer */}
+              <div style={{
+                padding: '16px 24px',
+                background: '#f9fafb',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                borderTop: '1px solid #e5e7eb'
               }}>
-                {modalMessage}
-              </p>
-            </div>
-
-            {/* Footer */}
-            <div style={{ 
-              padding: '16px 24px', 
-              background: '#f9fafb',
-              display: 'flex', 
-              justifyContent: 'flex-end',
-              borderTop: '1px solid #e5e7eb'
-            }}>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{
-                  padding: '10px 28px',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.3px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-                }}
-              >
-                Got it!
-              </button>
+                <button
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    padding: '10px 28px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                    transition: 'all 0.2s',
+                    letterSpacing: '0.3px'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+                  }}
+                >
+                  Got it!
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
+        )
+      }
+
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -708,6 +684,6 @@ export const DashboardWorkingPage = () => {
           }
         }
       `}</style>
-    </div>
+    </div >
   );
 };
