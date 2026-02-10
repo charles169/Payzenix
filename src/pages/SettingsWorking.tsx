@@ -34,6 +34,8 @@ export const SettingsWorkingPage = () => {
   const [esiEmployerRate, setEsiEmployerRate] = useState('3.25%');
   const [esiSalaryLimit, setEsiSalaryLimit] = useState('₹21,000');
   const [salaryComponents, setSalaryComponents] = useState(initialSalaryComponents);
+  const [editingComponent, setEditingComponent] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState<any>({});
   const [notifications, setNotifications] = useState({
     payrollProcessed: true,
     payslipAvailable: true,
@@ -116,10 +118,32 @@ export const SettingsWorkingPage = () => {
   };
 
   const handleEditComponent = (componentId: number) => {
-    toast.info('Edit functionality: Double-click the component name to edit inline', {
+    const component = salaryComponents.find(c => c.id === componentId);
+    if (component) {
+      setEditingComponent(componentId);
+      setEditValues({
+        name: component.name,
+        calculation: component.calculation,
+        taxable: component.taxable,
+      });
+    }
+  };
+
+  const handleSaveEdit = (componentId: number) => {
+    setSalaryComponents(salaryComponents.map(c => 
+      c.id === componentId ? { ...c, ...editValues } : c
+    ));
+    setEditingComponent(null);
+    setEditValues({});
+    toast.success('Component updated! Click Save Changes to persist.', {
       duration: 3000,
-      icon: '✏️',
+      icon: '✅',
     });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingComponent(null);
+    setEditValues({});
   };
 
   const handleDeleteComponent = (componentId: number, componentName: string) => {
@@ -345,7 +369,19 @@ export const SettingsWorkingPage = () => {
                     <tbody className="divide-y divide-border">
                       {salaryComponents.map((component) => (
                         <tr key={component.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-6 py-4 font-semibold text-foreground">{component.name}</td>
+                          <td className="px-6 py-4 font-semibold text-foreground">
+                            {editingComponent === component.id ? (
+                              <input
+                                type="text"
+                                value={editValues.name}
+                                onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
+                                className="w-full px-3 py-1 bg-muted/30 border border-border rounded text-sm"
+                                autoFocus
+                              />
+                            ) : (
+                              component.name
+                            )}
+                          </td>
                           <td className="px-3 py-4">
                             <span className={cn(
                               "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
@@ -354,11 +390,33 @@ export const SettingsWorkingPage = () => {
                               {component.type === 'earning' ? 'Earning' : 'Deduction'}
                             </span>
                           </td>
-                          <td className="px-3 py-4 text-sm">{component.calculation}</td>
+                          <td className="px-3 py-4 text-sm">
+                            {editingComponent === component.id ? (
+                              <input
+                                type="text"
+                                value={editValues.calculation}
+                                onChange={(e) => setEditValues({ ...editValues, calculation: e.target.value })}
+                                className="w-full px-3 py-1 bg-muted/30 border border-border rounded text-sm"
+                              />
+                            ) : (
+                              component.calculation
+                            )}
+                          </td>
                           <td className="px-3 py-4">
-                            <span className="px-3 py-1 bg-muted/50 text-muted-foreground rounded-full text-xs border border-border">
-                              {component.taxable ? 'Yes' : 'No'}
-                            </span>
+                            {editingComponent === component.id ? (
+                              <select
+                                value={editValues.taxable ? 'yes' : 'no'}
+                                onChange={(e) => setEditValues({ ...editValues, taxable: e.target.value === 'yes' })}
+                                className="px-3 py-1 bg-muted/30 border border-border rounded text-xs"
+                              >
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                              </select>
+                            ) : (
+                              <span className="px-3 py-1 bg-muted/50 text-muted-foreground rounded-full text-xs border border-border">
+                                {component.taxable ? 'Yes' : 'No'}
+                              </span>
+                            )}
                           </td>
                           <td className="px-3 py-4 text-center">
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -367,25 +425,45 @@ export const SettingsWorkingPage = () => {
                                 checked={component.active}
                                 onChange={() => toggleComponentStatus(component.id)}
                                 className="sr-only peer"
+                                disabled={editingComponent === component.id}
                               />
-                              <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
+                              <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner peer-disabled:opacity-50"></div>
                             </label>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex gap-2 justify-end">
-                              <button
-                                onClick={() => handleEditComponent(component.id)}
-                                className="p-2 bg-card text-card-foreground border border-border rounded-lg hover:bg-muted transition-colors shadow-sm"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteComponent(component.id, component.name)}
-                                className="p-2 bg-card text-destructive border border-border rounded-lg hover:bg-destructive/10 transition-colors shadow-sm"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
+                            {editingComponent === component.id ? (
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  onClick={() => handleSaveEdit(component.id)}
+                                  className="px-3 py-1 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={handleCancelEdit}
+                                  className="px-3 py-1 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors text-sm font-medium"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  onClick={() => handleEditComponent(component.id)}
+                                  className="p-2 bg-card text-card-foreground border border-border rounded-lg hover:bg-muted transition-colors shadow-sm"
+                                  title="Edit component"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteComponent(component.id, component.name)}
+                                  className="p-2 bg-card text-destructive border border-border rounded-lg hover:bg-destructive/10 transition-colors shadow-sm"
+                                  title="Delete component"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
