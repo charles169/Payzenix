@@ -6,10 +6,7 @@
   "scripts": {
     "start": "node index-mongodb.js",
     "dev": "nodemon index-mongodb.js",
-    "start:simple": "node index-simple.js",
-    "dev:simple": "nodemon index-simple.js",
-    "seed": "node seed.js",
-    "seed:mongo": "node seed-mongodb.js"
+    "seed": "node seed-mongodb.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

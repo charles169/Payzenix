@@ -6,6 +6,7 @@ import { downloadComplianceChallans, downloadPFChallan, downloadESIChallan, down
 import { payrollAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 import { usePageFocus } from '@/hooks/usePageFocus';
+import { cn } from '@/lib/utils';
 
 const complianceData = {
   pf: { name: 'Provident Fund (PF)', employer: 156780, employee: 156780, total: 313560, dueDate: '15th Feb 2024', status: 'pending', filedMonths: 11, totalMonths: 12 },
@@ -46,27 +47,19 @@ export const ComplianceWorkingPage = () => {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      filed: { bg: '#dcfce7', color: '#166534', text: 'Filed' },
-      pending: { bg: '#fef3c7', color: '#92400e', text: 'Pending' },
-      due_soon: { bg: '#fee2e2', color: '#991b1b', text: 'Due Soon' },
+      filed: { className: 'bg-emerald-500/10 text-emerald-500', icon: CheckCircle, text: 'Filed' },
+      pending: { className: 'bg-amber-500/10 text-amber-500', icon: Clock, text: 'Pending' },
+      due_soon: { className: 'bg-destructive/10 text-destructive', icon: AlertCircle, text: 'Due Soon' },
     };
-    const style = styles[status as keyof typeof styles] || { bg: '#f3f4f6', color: '#666', text: status };
-    
+    const style = styles[status as keyof typeof styles] || { className: 'bg-muted text-muted-foreground', icon: Clock, text: status };
+    const Icon = style.icon;
+
     return (
-      <span style={{
-        padding: '4px 12px',
-        background: style.bg,
-        color: style.color,
-        borderRadius: '12px',
-        fontSize: '12px',
-        fontWeight: '500',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px'
-      }}>
-        {status === 'filed' && <CheckCircle style={{ width: '12px', height: '12px' }} />}
-        {status === 'pending' && <Clock style={{ width: '12px', height: '12px' }} />}
-        {status === 'due_soon' && <AlertCircle style={{ width: '12px', height: '12px' }} />}
+      <span className={cn(
+        "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5",
+        style.className
+      )}>
+        <Icon className="w-3.5 h-3.5" />
         {style.text}
       </span>
     );
@@ -74,34 +67,34 @@ export const ComplianceWorkingPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div 
+      <div
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
         <Sidebar />
       </div>
-      <div 
-        style={{ 
-          marginLeft: sidebarCollapsed ? '80px' : '280px',
-          transition: 'margin-left 0.3s ease-in-out'
-        }}
+      <div
+        className={cn(
+          "transition-all duration-300",
+          sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+        )}
       >
         <Header />
-        <main className="p-6 animate-fadeIn">
-          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <main className="p-6">
+          <div className="max-w-[1400px] mx-auto">
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
               <div>
-                <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>Statutory Compliance</h1>
-                <p style={{ color: '#666', fontSize: '14px' }}>Manage PF, ESI, TDS, and Professional Tax filings</p>
+                <h1 className="text-3xl font-bold mb-1.5 text-foreground text-gradient">Statutory Compliance</h1>
+                <p className="text-muted-foreground text-sm">Manage PF, ESI, TDS, and Professional Tax filings</p>
               </div>
               <button
                 onClick={async () => {
                   try {
                     const loadingToast = toast.loading('Generating compliance challans...');
-                    
+
                     await downloadComplianceChallans(payrolls);
-                    
+
                     setTimeout(() => {
                       toast.dismiss(loadingToast);
                       toast.success('All 4 challans downloaded successfully!');
@@ -111,118 +104,103 @@ export const ComplianceWorkingPage = () => {
                     toast.error('Failed to download challans');
                   }
                 }}
-                style={{
-                  padding: '10px 20px',
-                  background: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
+                className="px-5 py-2.5 bg-primary text-primary-foreground border-none rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-md active:scale-95 whitespace-nowrap"
               >
-                <Download style={{ width: '16px', height: '16px' }} />
+                <Download className="w-4 h-4" />
                 Download All Challans
               </button>
             </div>
 
             {/* Compliance Score */}
-            <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', borderLeft: '4px solid #16a34a', padding: '24px', marginBottom: '30px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+            <div className="bg-card text-card-foreground rounded-xl border border-border border-l-4 border-l-emerald-500 p-6 mb-8 shadow-md">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div>
-                  <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '4px' }}>Compliance Score</h2>
-                  <p style={{ color: '#666', fontSize: '14px' }}>FY 2023-24 (April - March)</p>
+                  <h2 className="text-xl font-bold mb-1">Compliance Score</h2>
+                  <p className="text-muted-foreground text-sm">FY 2023-24 (April - March)</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: '48px', fontWeight: 'bold', color: '#16a34a', margin: 0 }}>98%</p>
-                    <p style={{ fontSize: '14px', color: '#666' }}>Overall Score</p>
+                <div className="flex items-center gap-10">
+                  <div className="text-center">
+                    <p className="text-5xl font-bold text-emerald-500 m-0">98%</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">Overall Score</p>
                   </div>
-                  <div style={{ width: '1px', height: '60px', background: '#e5e7eb' }} />
-                  <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>44/45</p>
-                    <p style={{ fontSize: '14px', color: '#666' }}>Filings Complete</p>
+                  <div className="w-px h-12 bg-border hidden md:block" />
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-foreground m-0">44/45</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">Filings Complete</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Compliance Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6 mb-8">
               {Object.entries(complianceData).map(([key, data]) => (
-                <div key={key} style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <Building2 style={{ width: '20px', height: '20px', color: '#4f46e5' }} />
+                <div key={key} className="bg-card text-card-foreground rounded-xl border border-border p-6 shadow-md transition-all hover:shadow-lg hover:border-primary/30">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Building2 className="w-5 h-5 text-primary" />
+                      </div>
                       <div>
-                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{data.name}</h3>
+                        <h3 className="text-lg font-bold m-0">{data.name}</h3>
                       </div>
                     </div>
                     {getStatusBadge(data.status)}
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
-                    <div style={{ padding: '12px', background: '#f9fafb', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '10px', color: '#666', margin: 0, marginBottom: '4px' }}>Employer</p>
-                      <p style={{ fontSize: '16px', fontWeight: 'bold', margin: 0 }}>₹{data.employer.toLocaleString('en-IN')}</p>
+                  <div className="grid grid-cols-3 gap-3 mb-6">
+                    <div className="p-3 bg-muted/30 rounded-lg text-center border border-border/50">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-1">Employer</p>
+                      <p className="text-sm font-bold truncate">₹{data.employer.toLocaleString('en-IN')}</p>
                     </div>
-                    <div style={{ padding: '12px', background: '#f9fafb', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '10px', color: '#666', margin: 0, marginBottom: '4px' }}>Employee</p>
-                      <p style={{ fontSize: '16px', fontWeight: 'bold', margin: 0 }}>₹{data.employee.toLocaleString('en-IN')}</p>
+                    <div className="p-3 bg-muted/30 rounded-lg text-center border border-border/50">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-1">Employee</p>
+                      <p className="text-sm font-bold truncate">₹{data.employee.toLocaleString('en-IN')}</p>
                     </div>
-                    <div style={{ padding: '12px', background: '#ede9fe', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '10px', color: '#7c3aed', margin: 0, marginBottom: '4px' }}>Total</p>
-                      <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#7c3aed', margin: 0 }}>₹{data.total.toLocaleString('en-IN')}</p>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: '20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '8px' }}>
-                      <span style={{ color: '#666' }}>Filings Completed</span>
-                      <span style={{ fontWeight: '500' }}>{data.filedMonths}/{data.totalMonths} months</span>
-                    </div>
-                    <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${(data.filedMonths / data.totalMonths) * 100}%`, height: '100%', background: '#4f46e5', borderRadius: '4px' }} />
+                    <div className="p-3 bg-primary/10 rounded-lg text-center border border-primary/20">
+                      <p className="text-[10px] text-primary uppercase tracking-wider font-bold mb-1">Total</p>
+                      <p className="text-sm font-bold text-primary truncate">₹{data.total.toLocaleString('en-IN')}</p>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                      <Calendar style={{ width: '16px', height: '16px', color: '#666' }} />
-                      <span style={{ color: '#666' }}>Due:</span>
-                      <span style={{ fontWeight: '500', color: data.status === 'due_soon' ? '#dc2626' : '#000' }}>{data.dueDate}</span>
+                  <div className="mb-6">
+                    <div className="flex justify-between text-xs font-semibold mb-2">
+                      <span className="text-muted-foreground">Filings Completed</span>
+                      <span className="text-foreground">{data.filedMonths}/{data.totalMonths} months</span>
+                    </div>
+                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden shadow-inner">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${(data.filedMonths / data.totalMonths) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-5 border-t border-border">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground font-medium">Due:</span>
+                      <span className={cn(
+                        "font-bold",
+                        data.status === 'due_soon' ? "text-destructive" : "text-foreground"
+                      )}>{data.dueDate}</span>
                     </div>
                     <button
                       onClick={async () => {
                         const loadingToast = toast.loading(`Generating ${data.name} challan...`);
                         setTimeout(() => {
-                          // Download the appropriate challan based on key
                           if (key === 'pf') downloadPFChallan(payrolls);
                           else if (key === 'esi') downloadESIChallan(payrolls);
                           else if (key === 'tds') downloadTDSChallan(payrolls);
                           else if (key === 'pt') downloadPTChallan(payrolls);
-                          
+
                           toast.dismiss(loadingToast);
                           toast.success(`${data.name} challan downloaded!`);
                         }, 800);
                       }}
-                      style={{
-                        padding: '6px 12px',
-                        background: 'transparent',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
+                      className="px-4 py-2 bg-card text-card-foreground border border-border rounded-lg hover:bg-muted transition-colors shadow-sm text-xs font-bold flex items-center gap-2"
                     >
-                      <FileText style={{ width: '14px', height: '14px' }} />
+                      <FileText className="w-4 h-4" />
                       Generate Challan
                     </button>
                   </div>
@@ -231,62 +209,55 @@ export const ComplianceWorkingPage = () => {
             </div>
 
             {/* Filing History */}
-            <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-              <div style={{ padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '4px' }}>Filing History</h2>
-                <p style={{ color: '#666', fontSize: '14px' }}>Track your compliance filings across all categories</p>
+            <div className="bg-card text-card-foreground rounded-xl border border-border shadow-md overflow-hidden">
+              <div className="p-6 border-b border-border">
+                <h2 className="text-xl font-bold mb-1 border-none">Filing History</h2>
+                <p className="text-muted-foreground text-sm">Track your compliance filings across all categories</p>
               </div>
 
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f9fafb' }}>
-                  <tr>
-                    <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Month</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>PF</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>ESI</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>TDS</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: '600' }}>PT</th>
-                    <th style={{ padding: '12px 24px', textAlign: 'right', fontSize: '14px', fontWeight: '600' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filingHistory.map((row) => (
-                    <tr key={row.month} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                      <td style={{ padding: '12px 24px', fontWeight: '500' }}>{row.month}</td>
-                      <td style={{ padding: '12px', textAlign: 'center' }}>{getStatusBadge(row.pf)}</td>
-                      <td style={{ padding: '12px', textAlign: 'center' }}>{getStatusBadge(row.esi)}</td>
-                      <td style={{ padding: '12px', textAlign: 'center' }}>{getStatusBadge(row.tds)}</td>
-                      <td style={{ padding: '12px', textAlign: 'center' }}>{getStatusBadge(row.pt)}</td>
-                      <td style={{ padding: '12px 24px', textAlign: 'right' }}>
-                        <button
-                          onClick={async () => {
-                            const loadingToast = toast.loading(`Downloading ${row.month} reports...`);
-                            setTimeout(async () => {
-                              // Download all 4 challans
-                              await downloadComplianceChallans(payrolls);
-                              toast.dismiss(loadingToast);
-                              toast.success(`${row.month} reports downloaded!`);
-                            }, 1000);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            background: 'transparent',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}
-                        >
-                          <Download style={{ width: '14px', height: '14px' }} />
-                          Download
-                        </button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="px-6 py-4 text-left font-semibold text-sm">Month</th>
+                      <th className="px-3 py-4 text-center font-semibold text-sm">PF</th>
+                      <th className="px-3 py-4 text-center font-semibold text-sm">ESI</th>
+                      <th className="px-3 py-4 text-center font-semibold text-sm">TDS</th>
+                      <th className="px-3 py-4 text-center font-semibold text-sm">PT</th>
+                      <th className="px-6 py-4 text-right font-semibold text-sm">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filingHistory.map((row) => (
+                      <tr key={row.month} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-foreground">{row.month}</td>
+                        <td className="px-3 py-4 flex justify-center">{getStatusBadge(row.pf)}</td>
+                        <td className="px-3 py-4 text-center">{getStatusBadge(row.esi)}</td>
+                        <td className="px-3 py-4 text-center">{getStatusBadge(row.tds)}</td>
+                        <td className="px-3 py-4 text-center">{getStatusBadge(row.pt)}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end">
+                            <button
+                              onClick={async () => {
+                                const loadingToast = toast.loading(`Downloading ${row.month} reports...`);
+                                setTimeout(async () => {
+                                  await downloadComplianceChallans(payrolls);
+                                  toast.dismiss(loadingToast);
+                                  toast.success(`${row.month} reports downloaded!`);
+                                }, 1000);
+                              }}
+                              className="px-3 py-1.5 bg-card text-card-foreground border border-border rounded-lg hover:bg-muted transition-colors shadow-sm text-xs font-bold flex items-center gap-2"
+                            >
+                              <Download className="w-3.5 h-3.5 text-primary" />
+                              Download
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </main>
@@ -294,114 +265,31 @@ export const ComplianceWorkingPage = () => {
 
       {/* Modal Popup - Professional Design */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          backdropFilter: 'blur(4px)',
-          animation: 'fadeIn 0.2s ease-out'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '0',
-            minWidth: '450px',
-            maxWidth: '550px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            animation: 'slideUp 0.3s ease-out',
-            overflow: 'hidden'
-          }}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-in fade-in duration-200">
+          <div className="bg-card text-card-foreground rounded-2xl min-w-[450px] max-w-[550px] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 border border-border">
             {/* Header with gradient */}
-            <div style={{
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              padding: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px'
-              }}>
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 p-6 flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl shadow-inner">
                 📊
               </div>
               <div>
-                <h3 style={{ 
-                  margin: 0, 
-                  color: 'white', 
-                  fontSize: '20px', 
-                  fontWeight: '600',
-                  letterSpacing: '-0.5px'
-                }}>
-                  Compliance
-                </h3>
-                <p style={{ 
-                  margin: 0, 
-                  color: 'rgba(255,255,255,0.9)', 
-                  fontSize: '13px',
-                  marginTop: '2px'
-                }}>
-                  Statutory Compliance Management
-                </p>
+                <h3 className="m-0 text-white text-xl font-bold tracking-tight">Compliance</h3>
+                <p className="m-0 text-white/80 text-sm mt-0.5">Statutory Compliance Management</p>
               </div>
             </div>
 
             {/* Content */}
-            <div style={{ padding: '28px 24px' }}>
-              <p style={{ 
-                fontSize: '15px', 
-                lineHeight: '1.6', 
-                color: '#374151',
-                margin: 0
-              }}>
+            <div className="p-8">
+              <p className="text-base leading-relaxed text-foreground/80 m-0">
                 {modalMessage}
               </p>
             </div>
 
             {/* Footer */}
-            <div style={{ 
-              padding: '16px 24px', 
-              background: '#f9fafb',
-              display: 'flex', 
-              justifyContent: 'flex-end',
-              borderTop: '1px solid #e5e7eb'
-            }}>
+            <div className="p-4 px-6 bg-muted/30 flex justify-end border-t border-border">
               <button
                 onClick={() => setShowModal(false)}
-                style={{
-                  padding: '10px 28px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.3px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.5)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
-                }}
+                className="px-8 py-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-none rounded-lg cursor-pointer text-sm font-bold shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 hover:shadow-emerald-500/30 active:translate-y-0 transition-all tracking-wide"
               >
                 Got it!
               </button>
@@ -409,7 +297,7 @@ export const ComplianceWorkingPage = () => {
           </div>
         </div>
       )}
-      
+
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }

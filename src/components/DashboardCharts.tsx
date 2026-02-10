@@ -1,9 +1,17 @@
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { useThemeStore } from '@/stores/themeStore';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
 
 export const DashboardCharts = () => {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+
+  const textColor = isDark ? '#94a3b8' : '#64748b';
+  const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(100, 116, 139, 0.1)';
+  const borderColor = isDark ? '#1e293b' : '#e2e8f0';
+
   // Salary Trend Chart Data
   const salaryTrendData = {
     labels: ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'],
@@ -27,6 +35,11 @@ export const DashboardCharts = () => {
         display: false,
       },
       tooltip: {
+        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+        titleColor: isDark ? '#f8fafc' : '#1e293b',
+        bodyColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+        borderWidth: 1,
         callbacks: {
           label: (context: any) => `₹${(context.parsed.y / 100000).toFixed(2)}L`,
         },
@@ -35,8 +48,20 @@ export const DashboardCharts = () => {
     scales: {
       y: {
         beginAtZero: true,
+        grid: {
+          color: gridColor,
+        },
         ticks: {
+          color: textColor,
           callback: (value: any) => `₹${(value / 100000).toFixed(1)}L`,
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: textColor,
         },
       },
     },
@@ -57,6 +82,8 @@ export const DashboardCharts = () => {
           '#ef4444',
           '#8b5cf6',
         ],
+        borderWidth: isDark ? 2 : 1,
+        borderColor: isDark ? '#0f172a' : '#ffffff',
       },
     ],
   };
@@ -70,10 +97,18 @@ export const DashboardCharts = () => {
         labels: {
           boxWidth: 12,
           padding: 10,
+          color: textColor,
           font: {
             size: 11,
           },
         },
+      },
+      tooltip: {
+        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+        titleColor: isDark ? '#f8fafc' : '#1e293b',
+        bodyColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+        borderWidth: 1,
       },
     },
   };
@@ -86,11 +121,13 @@ export const DashboardCharts = () => {
         label: 'Active Employees',
         data: [42, 43, 45, 46, 46, 48],
         backgroundColor: '#10b981',
+        borderRadius: 4,
       },
       {
         label: 'New Joiners',
         data: [2, 1, 3, 2, 1, 5],
         backgroundColor: '#4f46e5',
+        borderRadius: 4,
       },
     ],
   };
@@ -104,65 +141,85 @@ export const DashboardCharts = () => {
         labels: {
           boxWidth: 12,
           padding: 15,
+          color: textColor,
           font: {
             size: 11,
           },
         },
       },
+      tooltip: {
+        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+        titleColor: isDark ? '#f8fafc' : '#1e293b',
+        bodyColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+        borderWidth: 1,
+      },
     },
     scales: {
       y: {
         beginAtZero: true,
+        grid: {
+          color: gridColor,
+        },
         ticks: {
+          color: textColor,
           stepSize: 10,
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: textColor,
         },
       },
     },
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5 mb-8">
       {/* Salary Trend Chart */}
-      <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '24px' }}>
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0, marginBottom: '4px' }}>
+      <div className="bg-card text-card-foreground p-6 rounded-xl border border-border shadow-sm">
+        <div className="mb-5">
+          <h3 className="text-lg font-semibold m-0 mb-1 text-foreground">
             Payroll Trend
           </h3>
-          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
+          <p className="text-sm text-muted-foreground m-0">
             Last 6 months salary distribution
           </p>
         </div>
-        <div style={{ height: '280px' }}>
+        <div className="h-[280px]">
           <Line data={salaryTrendData} options={salaryTrendOptions} />
         </div>
       </div>
 
       {/* Department Distribution Chart */}
-      <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '24px' }}>
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0, marginBottom: '4px' }}>
+      <div className="bg-card text-card-foreground p-6 rounded-xl border border-border shadow-sm">
+        <div className="mb-5">
+          <h3 className="text-lg font-semibold m-0 mb-1 text-foreground">
             Department Distribution
           </h3>
-          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
+          <p className="text-sm text-muted-foreground m-0">
             Employee count by department
           </p>
         </div>
-        <div style={{ height: '280px' }}>
+        <div className="h-[280px]">
           <Doughnut data={departmentData} options={departmentOptions} />
         </div>
       </div>
 
       {/* Employee Growth Chart */}
-      <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '24px', gridColumn: 'span 2' }}>
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0, marginBottom: '4px' }}>
+      <div className="bg-card text-card-foreground p-6 rounded-xl border border-border shadow-sm lg:col-span-2">
+        <div className="mb-5">
+          <h3 className="text-lg font-semibold m-0 mb-1 text-foreground">
             Employee Growth
           </h3>
-          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
+          <p className="text-sm text-muted-foreground m-0">
             Active employees and new joiners over time
           </p>
         </div>
-        <div style={{ height: '280px' }}>
+        <div className="h-[280px]">
           <Bar data={employeeGrowthData} options={employeeGrowthOptions} />
         </div>
       </div>

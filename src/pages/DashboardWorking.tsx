@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { DashboardCharts } from '@/components/DashboardCharts';
 import { Users, IndianRupee, Calendar, FileCheck, Download, TrendingUp, Clock, AlertCircle, CheckCircle, Building2, Wallet } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export const DashboardWorkingPage = () => {
   const { user } = useAuthStore();
@@ -144,6 +145,131 @@ export const DashboardWorkingPage = () => {
     }
   };
 
+  const downloadPayslip = () => {
+    // Create a simple HTML payslip
+    const payslipHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Payslip - January 2024</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+          .company-name { font-size: 24px; font-weight: bold; color: #2563eb; }
+          .payslip-title { font-size: 18px; margin-top: 10px; }
+          .info-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
+          .info-block { flex: 1; }
+          .info-label { font-weight: bold; color: #666; font-size: 12px; }
+          .info-value { font-size: 14px; margin-top: 5px; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+          th { background-color: #f3f4f6; font-weight: bold; }
+          .earnings { color: #059669; }
+          .deductions { color: #dc2626; }
+          .net-pay { background-color: #2563eb; color: white; font-size: 18px; font-weight: bold; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company-name">PayZenix</div>
+          <div class="payslip-title">Payroll & HR Suite</div>
+          <div style="margin-top: 10px; font-size: 16px; font-weight: bold;">Payslip for January 2024</div>
+        </div>
+        
+        <div class="info-section">
+          <div class="info-block">
+            <div class="info-label">Employee Name</div>
+            <div class="info-value">${user?.name || 'N/A'}</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Employee ID</div>
+            <div class="info-value">${user?.employeeId || 'N/A'}</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Designation</div>
+            <div class="info-value">Employee</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Earnings</th>
+              <th style="text-align: right;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Basic Salary</td>
+              <td class="earnings" style="text-align: right;">35,000</td>
+            </tr>
+            <tr>
+              <td>HRA</td>
+              <td class="earnings" style="text-align: right;">14,000</td>
+            </tr>
+            <tr>
+              <td>Special Allowance</td>
+              <td class="earnings" style="text-align: right;">8,500</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Deductions</th>
+              <th style="text-align: right;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>PF Deduction</td>
+              <td class="deductions" style="text-align: right;">-4,200</td>
+            </tr>
+            <tr>
+              <td>Professional Tax</td>
+              <td class="deductions" style="text-align: right;">-200</td>
+            </tr>
+            <tr>
+              <td>Loan EMI</td>
+              <td class="deductions" style="text-align: right;">-5,000</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table>
+          <tbody>
+            <tr class="net-pay">
+              <td>Net Pay</td>
+              <td style="text-align: right;">₹52,450</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <p>This is a computer-generated payslip and does not require a signature.</p>
+          <p>Generated on: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Create a Blob and download
+    const blob = new Blob([payslipHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Payslip_${user?.name?.replace(/\s+/g, '_')}_January_2024.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showPopup('Payslip downloaded successfully!');
+  };
+
   const showPopup = (message: string) => {
     setModalMessage(message);
     setShowModal(true);
@@ -164,57 +290,63 @@ export const DashboardWorkingPage = () => {
           <Sidebar />
         </div>
         <div
-          style={{
-            marginLeft: sidebarCollapsed ? '80px' : '280px',
-            transition: 'margin-left 0.3s ease-in-out'
-          }}
+          className={cn(
+            "transition-all duration-300",
+            sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+          )}
         >
           <Header />
           <main className="p-6 animate-fadeIn">
-            <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-              <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>
+            <div className="max-w-[1400px] mx-auto">
+              <h1 className="text-3xl font-bold mb-1.5 text-foreground">
                 Welcome back, {user.name?.split(' ')[0] || 'User'}!
               </h1>
-              <p style={{ color: '#666', fontSize: '14px', marginBottom: '30px' }}>
+              <p className="text-muted-foreground text-sm mb-8">
                 Here's an overview of your salary and benefits
               </p>
 
-              {/* Stats */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-                <div style={{ padding: '24px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', color: 'white' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <IndianRupee style={{ width: '24px', height: '24px' }} />
-                    <p style={{ fontSize: '14px', opacity: 0.9, margin: 0 }}>Net Salary (This Month)</p>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                <div className="p-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <IndianRupee className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-xs font-bold uppercase tracking-wider opacity-90 m-0">Net Salary (Feb)</p>
                   </div>
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>₹52,450</p>
-                  <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '8px' }}>Credited on 1st Feb</p>
+                  <p className="text-3xl font-bold m-0 text-white">₹52,450</p>
+                  <p className="text-[10px] opacity-75 mt-2 font-medium">Credited on 1st Feb</p>
                 </div>
 
-                <div style={{ padding: '24px', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', borderRadius: '12px', color: 'white' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <Building2 style={{ width: '24px', height: '24px' }} />
-                    <p style={{ fontSize: '14px', opacity: 0.9, margin: 0 }}>PF Balance</p>
+                <div className="p-6 bg-gradient-to-br from-rose-500 to-orange-500 rounded-xl text-white shadow-lg shadow-rose-500/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <Building2 className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-xs font-bold uppercase tracking-wider opacity-90 m-0">PF Balance</p>
                   </div>
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>₹1,24,560</p>
-                  <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '8px' }}>As of Jan 2024</p>
+                  <p className="text-3xl font-bold m-0 text-white">₹1,24,560</p>
+                  <p className="text-[10px] opacity-75 mt-2 font-medium">As of Jan 2024</p>
                 </div>
 
-                <div style={{ padding: '24px', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: '12px', color: 'white' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <Wallet style={{ width: '24px', height: '24px' }} />
-                    <p style={{ fontSize: '14px', opacity: 0.9, margin: 0 }}>Active Loan</p>
+                <div className="p-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl text-white shadow-lg shadow-blue-500/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <Wallet className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="text-xs font-bold uppercase tracking-wider opacity-90 m-0">Active Loan</p>
                   </div>
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>₹15,000</p>
-                  <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '8px' }}>EMI: ₹5,000/month</p>
+                  <p className="text-3xl font-bold m-0 text-white">₹15,000</p>
+                  <p className="text-[10px] opacity-75 mt-2 font-medium">EMI: ₹5,000/month</p>
                 </div>
               </div>
 
               {/* Salary Breakdown */}
-              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '24px', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>Salary Breakdown</h2>
-                <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>January 2024</p>
+              <div className="bg-card text-card-foreground rounded-xl border border-border p-6 mb-5 shadow-sm">
+                <h2 className="text-xl font-bold mb-2">Salary Breakdown</h2>
+                <p className="text-muted-foreground text-sm mb-5">January 2024</p>
 
-                <div style={{ display: 'grid', gap: '12px' }}>
+                <div className="grid gap-3">
                   {[
                     { label: 'Basic Salary', value: '₹35,000', type: 'earning' },
                     { label: 'HRA', value: '₹14,000', type: 'earning' },
@@ -223,40 +355,28 @@ export const DashboardWorkingPage = () => {
                     { label: 'Professional Tax', value: '-₹200', type: 'deduction' },
                     { label: 'Loan EMI', value: '-₹5,000', type: 'deduction' },
                   ].map((item) => (
-                    <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
-                      <span style={{ color: '#666' }}>{item.label}</span>
-                      <span style={{ fontWeight: '500', color: item.type === 'deduction' ? '#dc2626' : '#000' }}>
+                    <div key={item.label} className="flex justify-between py-3 border-b border-muted last:border-0">
+                      <span className="text-muted-foreground">{item.label}</span>
+                      <span className={cn(
+                        "font-bold",
+                        item.type === 'deduction' ? 'text-destructive' : 'text-emerald-500'
+                      )}>
                         {item.value}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '16px', marginTop: '16px', borderTop: '2px solid #e5e7eb' }}>
-                  <span style={{ fontWeight: 'bold', fontSize: '18px' }}>Net Pay</span>
-                  <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#4f46e5' }}>₹52,450</span>
+                <div className="flex justify-between pt-4 mt-4 border-t-2 border-border">
+                  <span className="font-bold text-lg">Net Pay</span>
+                  <span className="text-2xl font-bold text-primary">₹52,450</span>
                 </div>
 
                 <button
-                  onClick={() => showPopup('Downloading payslip...')}
-                  style={{
-                    width: '100%',
-                    marginTop: '20px',
-                    padding: '12px',
-                    background: '#4f46e5',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
+                  onClick={downloadPayslip}
+                  className="w-full mt-5 p-3 bg-primary text-primary-foreground border-none rounded-lg cursor-pointer text-sm font-medium flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
                 >
-                  <Download style={{ width: '16px', height: '16px' }} />
+                  <Download className="w-4 h-4" />
                   Download Payslip
                 </button>
               </div>
@@ -284,14 +404,14 @@ export const DashboardWorkingPage = () => {
           <Sidebar />
         </div>
         <div
-          style={{
-            marginLeft: sidebarCollapsed ? '80px' : '280px',
-            transition: 'margin-left 0.3s ease-in-out'
-          }}
+          className={cn(
+            "transition-all duration-300",
+            sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+          )}
         >
           <Header />
           <main className="p-6">
-            <div style={{ padding: '50px', textAlign: 'center' }}>Loading dashboard...</div>
+            <div className="p-12 text-center text-muted-foreground animate-pulse">Loading dashboard...</div>
           </main>
         </div>
       </div>
@@ -307,87 +427,75 @@ export const DashboardWorkingPage = () => {
         <Sidebar />
       </div>
       <div
-        style={{
-          marginLeft: sidebarCollapsed ? '80px' : '280px',
-          transition: 'margin-left 0.3s ease-in-out'
-        }}
+        className={cn(
+          "transition-all duration-300",
+          sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+        )}
       >
         <Header />
         <main className="p-6">
-          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div className="max-w-[1400px] mx-auto">
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <div className="flex justify-between items-center mb-8">
               <div>
-                <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>Dashboard</h1>
-                <p style={{ color: '#666', fontSize: '14px' }}>
+                <h1 className="text-3xl font-bold mb-1.5 text-foreground text-gradient">Dashboard</h1>
+                <p className="text-muted-foreground text-sm">
                   Welcome back, {user.name || 'User'}. Here's what's happening today.
                 </p>
               </div>
               <button
                 onClick={() => showPopup('Payroll will be processed for all active employees. This feature calculates salaries, deductions, and generates payslips automatically.')}
-                style={{
-                  padding: '10px 20px',
-                  background: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
+                className="px-5 py-2.5 bg-primary text-primary-foreground border-none rounded-lg cursor-pointer text-sm font-medium flex items-center gap-2 hover:bg-primary/90 transition-all shadow-md active:scale-95"
               >
-                <Calendar style={{ width: '16px', height: '16px' }} />
+                <Calendar className="w-4 h-4" />
                 Run Payroll
               </button>
             </div>
 
             {/* Stats Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ padding: '24px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{ padding: '12px', background: '#ede9fe', borderRadius: '8px' }}>
-                    <Users style={{ width: '20px', height: '20px', color: '#7c3aed' }} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+              <div className="p-6 bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <Users className="w-5 h-5 text-primary" />
                   </div>
-                  <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Total Employees</p>
+                  <p className="text-sm text-muted-foreground font-medium m-0">Total Employees</p>
                 </div>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>{stats.totalEmployees}</p>
-                <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>{stats.activeEmployees} active</p>
+                <p className="text-3xl font-bold m-0 text-foreground">{stats.totalEmployees}</p>
+                <p className="text-xs text-muted-foreground mt-2">{stats.activeEmployees} active</p>
               </div>
 
-              <div style={{ padding: '24px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{ padding: '12px', background: '#dbeafe', borderRadius: '8px' }}>
-                    <IndianRupee style={{ width: '20px', height: '20px', color: '#2563eb' }} />
+              <div className="p-6 bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-3 bg-info/10 rounded-lg">
+                    <IndianRupee className="w-5 h-5 text-info" />
                   </div>
-                  <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Payroll This Month</p>
+                  <p className="text-sm text-muted-foreground font-medium m-0">Payroll This Month</p>
                 </div>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>₹{stats.payrollAmount}</p>
-                <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>{stats.payrollEmployees} employees</p>
+                <p className="text-3xl font-bold m-0 text-foreground">₹{stats.payrollAmount}</p>
+                <p className="text-xs text-muted-foreground mt-2">{stats.payrollEmployees} employees</p>
               </div>
 
-              <div style={{ padding: '24px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{ padding: '12px', background: '#fef3c7', borderRadius: '8px' }}>
-                    <Clock style={{ width: '20px', height: '20px', color: '#d97706' }} />
+              <div className="p-6 bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-3 bg-warning/10 rounded-lg">
+                    <Clock className="w-5 h-5 text-warning" />
                   </div>
-                  <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Pending Approvals</p>
+                  <p className="text-sm text-muted-foreground font-medium m-0">Pending Approvals</p>
                 </div>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>{stats.pendingApprovals}</p>
-                <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>Requires attention</p>
+                <p className="text-3xl font-bold m-0 text-foreground">{stats.pendingApprovals}</p>
+                <p className="text-xs text-muted-foreground mt-2">Requires attention</p>
               </div>
 
-              <div style={{ padding: '24px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{ padding: '12px', background: '#dcfce7', borderRadius: '8px' }}>
-                    <FileCheck style={{ width: '20px', height: '20px', color: '#16a34a' }} />
+              <div className="p-6 bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-3 bg-success/10 rounded-lg">
+                    <FileCheck className="w-5 h-5 text-success" />
                   </div>
-                  <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Compliance Score</p>
+                  <p className="text-sm text-muted-foreground font-medium m-0">Compliance Score</p>
                 </div>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>{stats.complianceScore}%</p>
-                <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>All filings up to date</p>
+                <p className="text-3xl font-bold m-0 text-foreground">{stats.complianceScore}%</p>
+                <p className="text-xs text-muted-foreground mt-2">All filings up to date</p>
               </div>
             </div>
 
@@ -395,70 +503,53 @@ export const DashboardWorkingPage = () => {
             <DashboardCharts />
 
             {/* Main Content Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '30px' }}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               {/* Recent Payroll */}
-              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div className="lg:col-span-2 bg-card text-card-foreground rounded-xl border border-border p-6 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '4px' }}>Recent Payroll Runs</h2>
-                    <p style={{ color: '#666', fontSize: '14px' }}>Last 3 months payroll summary</p>
+                    <h2 className="text-xl font-bold mb-1">Recent Payroll Runs</h2>
+                    <p className="text-muted-foreground text-sm">Last 3 months payroll summary</p>
                   </div>
                   <button
                     onClick={() => showPopup('Viewing all payrolls...')}
-                    style={{
-                      padding: '6px 12px',
-                      background: 'transparent',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
+                    className="px-3 py-1.5 bg-transparent border border-border rounded-md cursor-pointer text-sm hover:bg-muted transition-colors"
                   >
                     View All
                   </button>
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
                     <thead>
-                      <tr style={{ borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
-                        <th style={{ width: '30%', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>Month</th>
-                        <th style={{ width: '20%', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>Employees</th>
-                        <th style={{ width: '25%', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>Amount</th>
-                        <th style={{ width: '25%', padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase' }}>Status</th>
+                      <tr className="border-b border-border bg-muted/30">
+                        <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Month</th>
+                        <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Employees</th>
+                        <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
+                        <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {recentPayrolls.length === 0 ? (
                         <tr>
-                          <td colSpan={4} style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                          <td colSpan={4} className="p-10 text-center text-muted-foreground">
                             No payroll data available
                           </td>
                         </tr>
                       ) : (
                         recentPayrolls.map((payroll, index) => (
-                          <tr key={`payroll-${index}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                            <td style={{ padding: '16px', fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                          <tr key={`payroll-${index}`} className="border-b border-border hover:bg-muted/30 transition-colors">
+                            <td className="p-4 text-sm font-medium text-foreground">
                               {payroll.monthName || 'N/A'}
                             </td>
-                            <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
+                            <td className="p-4 text-sm text-foreground">
                               {payroll.employees || 0}
                             </td>
-                            <td style={{ padding: '16px', fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                            <td className="p-4 text-sm font-medium text-foreground">
                               {payroll.amount || '₹0'}
                             </td>
-                            <td style={{ padding: '16px' }}>
-                              <span style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                                background: '#dcfce7',
-                                color: '#166534',
-                                fontSize: '12px',
-                                fontWeight: '500'
-                              }}>
+                            <td className="p-4">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/10 text-success text-xs font-semibold border border-success/20">
                                 <CheckCircle size={14} />
                                 Completed
                               </span>
@@ -472,34 +563,23 @@ export const DashboardWorkingPage = () => {
               </div>
 
               {/* Pending Actions */}
-              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '24px' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '4px' }}>Pending Actions</h2>
-                <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>Tasks requiring your attention</p>
+              <div className="bg-card text-card-foreground rounded-xl border border-border p-6 shadow-sm">
+                <h2 className="text-xl font-bold mb-1">Pending Actions</h2>
+                <p className="text-muted-foreground text-sm mb-5">Tasks requiring your attention</p>
 
-                <div style={{ display: 'grid', gap: '12px' }}>
+                <div className="grid gap-3">
                   {pendingActions.map((action) => (
                     <div
                       key={action.title}
-                      style={{
-                        padding: '12px',
-                        background: '#f9fafb',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        gap: '12px',
-                        alignItems: 'flex-start'
-                      }}
+                      className="p-3 bg-muted/30 rounded-lg cursor-pointer flex gap-3 items-start hover:bg-muted/50 transition-colors"
                     >
-                      <div style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        marginTop: '6px',
-                        background: action.priority === 'high' ? '#dc2626' : action.priority === 'medium' ? '#d97706' : '#16a34a'
-                      }} />
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '14px', fontWeight: '500', margin: 0, marginBottom: '4px' }}>{action.title}</p>
-                        <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>Due in {action.dueIn}</p>
+                      <div className={cn(
+                        "w-2 h-2 rounded-full mt-1.5",
+                        action.priority === 'high' ? 'bg-destructive' : action.priority === 'medium' ? 'bg-warning' : 'bg-success'
+                      )} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium mb-1">{action.title}</p>
+                        <p className="text-xs text-muted-foreground">Due in {action.dueIn}</p>
                       </div>
                     </div>
                   ))}
@@ -507,16 +587,7 @@ export const DashboardWorkingPage = () => {
 
                 <button
                   onClick={() => showPopup('Viewing all tasks...')}
-                  style={{
-                    width: '100%',
-                    marginTop: '16px',
-                    padding: '10px',
-                    background: 'transparent',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
+                  className="w-full mt-4 p-2.5 bg-transparent border border-border rounded-md cursor-pointer text-sm hover:bg-muted transition-colors font-medium"
                 >
                   View All Tasks
                 </button>
@@ -524,149 +595,68 @@ export const DashboardWorkingPage = () => {
             </div>
 
             {/* Employee Overview */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { label: 'Active', value: stats.activeEmployees, icon: Users, color: '#7c3aed', bg: '#ede9fe' },
-                { label: 'On Leave', value: stats.totalEmployees - stats.activeEmployees, icon: Clock, color: '#d97706', bg: '#fef3c7' },
-                { label: 'Total Employees', value: stats.totalEmployees, icon: TrendingUp, color: '#16a34a', bg: '#dcfce7' },
-                { label: 'Pending Loans', value: stats.pendingApprovals, icon: AlertCircle, color: '#2563eb', bg: '#dbeafe' },
+                { label: 'Active', value: stats.activeEmployees, icon: Users, variant: 'primary' },
+                { label: 'On Leave', value: stats.totalEmployees - stats.activeEmployees, icon: Clock, variant: 'warning' },
+                { label: 'Total Employees', value: stats.totalEmployees, icon: TrendingUp, variant: 'success' },
+                { label: 'Pending Loans', value: stats.pendingApprovals, icon: AlertCircle, variant: 'info' },
               ].map((stat) => (
-                <div key={stat.label} style={{ padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ padding: '12px', background: stat.bg, borderRadius: '8px' }}>
-                      <stat.icon style={{ width: '20px', height: '20px', color: stat.color }} />
-                    </div>
-                    <div>
-                      <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{stat.label}</p>
-                      <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>{stat.value}</p>
-                    </div>
+                <div key={stat.label} className="p-5 bg-card text-card-foreground rounded-xl border border-border flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className={cn(
+                    "p-3 rounded-lg flex-shrink-0",
+                    stat.variant === 'primary' ? 'bg-primary/10 text-primary' :
+                      stat.variant === 'warning' ? 'bg-warning/10 text-warning' :
+                        stat.variant === 'success' ? 'bg-success/10 text-success' :
+                          'bg-info/10 text-info'
+                  )}>
+                    <stat.icon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium mb-1">{stat.label}</p>
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </div >
-        </main >
-      </div >
+          </div>
+        </main>
+      </div>
 
       {/* Modal Popup - Professional Design */}
-      {
-        showModal && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 99999,
-            backdropFilter: 'blur(4px)',
-            animation: 'fadeIn 0.2s ease-out'
-          }}>
-            <div style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '0',
-              minWidth: '450px',
-              maxWidth: '550px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-              animation: 'slideUp 0.3s ease-out',
-              overflow: 'hidden'
-            }}>
-              {/* Header with gradient */}
-              <div style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                padding: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  background: 'rgba(255,255,255,0.2)',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px'
-                }}>
-                  ℹ️
-                </div>
-                <div>
-                  <h3 style={{
-                    margin: 0,
-                    color: 'white',
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    letterSpacing: '-0.5px'
-                  }}>
-                    PayZenix
-                  </h3>
-                  <p style={{
-                    margin: 0,
-                    color: 'rgba(255,255,255,0.9)',
-                    fontSize: '13px',
-                    marginTop: '2px'
-                  }}>
-                    Payroll Management System
-                  </p>
-                </div>
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-in fade-in duration-200">
+          <div className="bg-card text-card-foreground rounded-2xl min-w-[450px] max-w-[550px] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 border border-border">
+            {/* Header with gradient */}
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl shadow-inner">
+                ℹ️
               </div>
-
-              {/* Content */}
-              <div style={{ padding: '28px 24px' }}>
-                <p style={{
-                  fontSize: '15px',
-                  lineHeight: '1.6',
-                  color: '#374151',
-                  margin: 0
-                }}>
-                  {modalMessage}
-                </p>
-              </div>
-
-              {/* Footer */}
-              <div style={{
-                padding: '16px 24px',
-                background: '#f9fafb',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                borderTop: '1px solid #e5e7eb'
-              }}>
-                <button
-                  onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '10px 28px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
-                    transition: 'all 0.2s',
-                    letterSpacing: '0.3px'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-                  }}
-                >
-                  Got it!
-                </button>
+              <div>
+                <h3 className="m-0 text-white text-xl font-bold tracking-tight">PayZenix</h3>
+                <p className="m-0 text-white/80 text-sm mt-0.5">Payroll Management System</p>
               </div>
             </div>
+
+            {/* Content */}
+            <div className="p-8">
+              <p className="text-base leading-relaxed text-foreground/80 m-0">
+                {modalMessage}
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 px-6 bg-muted/30 flex justify-end border-t border-border">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-8 py-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none rounded-lg cursor-pointer text-sm font-bold shadow-lg shadow-indigo-500/20 hover:-translate-y-0.5 hover:shadow-indigo-500/30 active:translate-y-0 transition-all tracking-wide"
+              >
+                Got it!
+              </button>
+            </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeIn {
@@ -684,6 +674,6 @@ export const DashboardWorkingPage = () => {
           }
         }
       `}</style>
-    </div >
+    </div>
   );
 };

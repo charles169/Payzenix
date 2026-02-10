@@ -67,7 +67,7 @@ export const LoginPage = () => {
               & HR Operations
             </h2>
             <p className="text-white/80 text-lg max-w-md mb-8">
-              Complete payroll processing with Indian statutory compliance. 
+              Complete payroll processing with Indian statutory compliance.
               PF, ESI, TDS, PT — all automated and secure.
             </p>
 
@@ -143,11 +143,12 @@ export const LoginPage = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      className="pr-10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>

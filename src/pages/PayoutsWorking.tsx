@@ -5,6 +5,7 @@ import { Eye, Download, Pencil, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { payrollAPI } from '@/services/api';
 import { usePageFocus } from '@/hooks/usePageFocus';
+import { cn } from '@/lib/utils';
 
 export const PayoutsWorkingPage = () => {
   const [payslips, setPayslips] = useState<any[]>([]);
@@ -71,20 +72,20 @@ export const PayoutsWorkingPage = () => {
 
   const updateStatus = async (value: 'paid' | 'pending' | 'processed') => {
     if (!selected.length) return;
-    
+
     // Show success toast immediately
     toast.success(`Payslips marked as ${value}`);
-    
+
     // Update local state immediately
     setPayslips((prev) =>
       prev.map((p) =>
         selected.includes(p._id) ? { ...p, status: value } : p
       )
     );
-    
+
     // Clear selection
     setSelected([]);
-    
+
     // Update in database in background
     try {
       for (const id of selected) {
@@ -147,26 +148,26 @@ export const PayoutsWorkingPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div 
+      <div
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
         <Sidebar />
       </div>
-      <div 
-        style={{ 
-          marginLeft: sidebarCollapsed ? '80px' : '280px',
-          transition: 'margin-left 0.3s ease-in-out'
-        }}
+      <div
+        className={cn(
+          "transition-all duration-300",
+          sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+        )}
       >
         <Header />
-        <main className="p-6 animate-fadeIn">
-          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <main className="p-6">
+          <div className="max-w-[1400px] mx-auto">
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
               <div>
-                <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>Payroll & Payouts</h1>
-                <p style={{ color: '#666', fontSize: '14px' }}>Manage salary payouts and payslips</p>
+                <h1 className="text-3xl font-bold mb-1.5 text-foreground text-gradient">Payroll & Payouts</h1>
+                <p className="text-muted-foreground text-sm">Manage salary payouts and payslips</p>
               </div>
               <button
                 onClick={() => downloadCSV(filtered.map(p => ({
@@ -178,461 +179,354 @@ export const PayoutsWorkingPage = () => {
                   'Net Salary': p.netSalary,
                   Status: p.status
                 })))}
-                style={{
-                  padding: '10px 20px',
-                  background: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
+                className="px-5 py-2.5 bg-primary text-primary-foreground border-none rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-md active:scale-95"
               >
-                <Download style={{ width: '16px', height: '16px' }} />
+                <Download className="w-4 h-4" />
                 Download All
               </button>
             </div>
 
             {/* Summary */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ padding: '24px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', color: 'white' }}>
-                <p style={{ fontSize: '14px', opacity: 0.9, margin: 0, marginBottom: '8px' }}>Employees</p>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>{filtered.length}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+              <div className="p-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+                <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Employees</p>
+                <p className="text-3xl font-bold m-0">{filtered.length}</p>
               </div>
-              <div style={{ padding: '24px', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', borderRadius: '12px', color: 'white' }}>
-                <p style={{ fontSize: '14px', opacity: 0.9, margin: 0, marginBottom: '8px' }}>Net Pay</p>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>₹{totalNet.toLocaleString()}</p>
+              <div className="p-6 bg-gradient-to-br from-rose-500 to-orange-500 rounded-xl text-white shadow-lg shadow-rose-500/20">
+                <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Net Pay</p>
+                <p className="text-3xl font-bold m-0">₹{totalNet.toLocaleString()}</p>
               </div>
-              <div style={{ padding: '24px', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: '12px', color: 'white' }}>
-                <p style={{ fontSize: '14px', opacity: 0.9, margin: 0, marginBottom: '8px' }}>Pending</p>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>{pendingCount}</p>
+              <div className="p-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl text-white shadow-lg shadow-blue-500/20">
+                <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Pending</p>
+                <p className="text-3xl font-bold m-0">{pendingCount}</p>
               </div>
-              <div style={{ padding: '24px', background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', borderRadius: '12px', color: '#333' }}>
-                <p style={{ fontSize: '14px', opacity: 0.9, margin: 0, marginBottom: '8px' }}>Status</p>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>Active</p>
+              <div className="p-6 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl text-white shadow-lg shadow-emerald-500/20">
+                <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Status</p>
+                <p className="text-3xl font-bold m-0 text-white">Active</p>
               </div>
             </div>
 
             {/* Filters */}
-            <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <input
-                  type="text"
-                  placeholder="Search name / ID"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{
-                    flex: 1,
-                    minWidth: '200px',
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
-                />
-                <select
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    minWidth: '120px'
-                  }}
-                >
-                  <option value="all">All Years</option>
-                  <option value="2026">2026</option>
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
-                  <option value="2023">2023</option>
-                </select>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    minWidth: '120px'
-                  }}
-                >
-                  <option value="all">All Status</option>
-                  <option value="paid">Paid</option>
-                  <option value="pending">Pending</option>
-                  <option value="processed">Processed</option>
-                </select>
+            <div className="bg-card text-card-foreground rounded-xl border border-border p-5 mb-6 shadow-md">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    placeholder="Search name / ID"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <select
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    className="px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground min-w-[120px]"
+                  >
+                    <option value="all">All Years</option>
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                  </select>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground min-w-[120px]"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="processed">Processed</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             {/* Bulk Actions */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <div className="flex gap-3 mb-6">
               <button
                 disabled={!selected.length}
                 onClick={() => updateStatus('paid')}
-                style={{
-                  padding: '8px 16px',
-                  background: selected.length ? '#16a34a' : '#d1d5db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: selected.length ? 'pointer' : 'not-allowed',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95 border-none cursor-pointer",
+                  selected.length ? "bg-emerald-500 text-white hover:bg-emerald-600" : "bg-muted text-muted-foreground cursor-not-allowed grayscale shadow-none"
+                )}
               >
                 Mark as Paid
               </button>
               <button
                 disabled={!selected.length}
                 onClick={() => updateStatus('processed')}
-                style={{
-                  padding: '8px 16px',
-                  background: selected.length ? '#2563eb' : '#d1d5db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: selected.length ? 'pointer' : 'not-allowed',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95 border-none cursor-pointer",
+                  selected.length ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-muted text-muted-foreground cursor-not-allowed grayscale shadow-none"
+                )}
               >
                 Mark as Processed
               </button>
               <button
                 disabled={!selected.length}
                 onClick={() => updateStatus('pending')}
-                style={{
-                  padding: '8px 16px',
-                  background: selected.length ? '#d97706' : '#d1d5db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: selected.length ? 'pointer' : 'not-allowed',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md active:scale-95 border-none cursor-pointer",
+                  selected.length ? "bg-amber-500 text-white hover:bg-amber-600" : "bg-muted text-muted-foreground cursor-not-allowed grayscale shadow-none"
+                )}
               >
                 Mark as Pending
               </button>
             </div>
 
             {/* Table */}
-            <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f9fafb' }}>
-                  <tr>
-                    <th style={{ padding: '12px 16px', textAlign: 'left' }}>
-                      <input type="checkbox" onChange={selectAll} checked={selected.length === filtered.length && filtered.length > 0} />
-                    </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Employee</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Month</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Net Pay</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '14px', fontWeight: '600' }}>Status</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '14px', fontWeight: '600' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} style={{ padding: '40px', textAlign: 'center' }}>
-                        <Loader2 style={{ width: '32px', height: '32px', margin: '0 auto', animation: 'spin 1s linear infinite' }} />
-                        <p style={{ marginTop: '10px', color: '#666' }}>Loading payslips...</p>
-                      </td>
+            <div className="bg-card text-card-foreground rounded-xl border border-border shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="p-4 text-left w-12">
+                        <input type="checkbox" onChange={selectAll} checked={selected.length === filtered.length && filtered.length > 0} className="w-4 h-4 rounded border-border" />
+                      </th>
+                      <th className="p-4 text-left font-semibold text-sm">Employee</th>
+                      <th className="p-4 text-left font-semibold text-sm">Month</th>
+                      <th className="p-4 text-left font-semibold text-sm">Net Pay</th>
+                      <th className="p-4 text-left font-semibold text-sm">Status</th>
+                      <th className="p-4 text-right font-semibold text-sm">Actions</th>
                     </tr>
-                  ) : filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                        No payslips found
-                      </td>
-                    </tr>
-                  ) : (
-                    filtered.map((p) => {
-                      if (!p || !p._id) return null;
-                      
-                      try {
-                        const employeeName = getEmployeeName(p);
-                        const employeeInitial = employeeName.charAt(0).toUpperCase();
-                        const monthName = new Date(p.year || 2024, (p.month || 1) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                        
-                        return (
-                          <tr key={p._id} style={{ borderBottom: '1px solid #f3f4f6', background: selected.includes(p._id) ? '#ede9fe' : 'white' }}>
-                            <td style={{ padding: '12px 16px' }}>
-                              <input type="checkbox" checked={selected.includes(p._id)} onChange={() => toggleSelect(p._id)} />
-                            </td>
-                            <td style={{ padding: '12px 16px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '50%',
-                                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: 'white',
-                                  fontWeight: 'bold',
-                                  fontSize: '14px'
-                                }}>
-                                  {employeeInitial}
-                                </div>
-                                <div>
-                                  <p style={{ fontWeight: '500', margin: 0 }}>{employeeName}</p>
-                                  <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{p._id}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td style={{ padding: '12px 16px' }}>
-                              {monthName}
-                            </td>
-                            <td style={{ padding: '12px 16px' }}>
-                              <span style={{
-                                padding: '6px 12px',
-                                background: '#dcfce7',
-                                color: '#166534',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                fontWeight: 'bold',
-                                border: '1px solid #86efac'
-                              }}>
-                                ₹{(p.netSalary || 0).toLocaleString()}
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px 16px' }}>
-                              <span style={{
-                                padding: '4px 12px',
-                                background: p.status === 'paid' ? 'linear-gradient(135deg, #16a34a 0%, #059669 100%)' : p.status === 'processed' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : 'linear-gradient(135deg, #d97706 0%, #ea580c 100%)',
-                                color: 'white',
-                                borderRadius: '12px',
-                                fontSize: '12px',
-                                fontWeight: '500',
-                                textTransform: 'capitalize'
-                              }}>
-                                {p.status || 'pending'}
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                <button
-                                  disabled={!selected.includes(p._id)}
-                                  onClick={() => updateStatus('pending')}
-                                  style={{
-                                    padding: '6px 12px',
-                                    background: 'transparent',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '4px',
-                                    cursor: selected.includes(p._id) ? 'pointer' : 'not-allowed',
-                                    opacity: selected.includes(p._id) ? 1 : 0.5
-                                  }}
-                                  title="Edit"
-                                >
-                                  <Pencil style={{ width: '16px', height: '16px', color: '#d97706' }} />
-                                </button>
-                                <button
-                                  onClick={() => handlePreview(p)}
-                                  style={{
-                                    padding: '6px 12px',
-                                    background: 'transparent',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                  }}
-                                  title="View"
-                                >
-                                  <Eye style={{ width: '16px', height: '16px', color: '#4f46e5' }} />
-                                </button>
-                                <button
-                                  onClick={() => downloadSingle(p)}
-                                  disabled={downloading === p._id}
-                                  style={{
-                                    padding: '6px 12px',
-                                    background: 'transparent',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '4px',
-                                    cursor: downloading === p._id ? 'not-allowed' : 'pointer',
-                                    opacity: downloading === p._id ? 0.6 : 1
-                                  }}
-                                  title="Download"
-                                >
-                                  {downloading === p._id ? (
-                                    <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
-                                  ) : (
-                                    <Download style={{ width: '16px', height: '16px', color: '#16a34a' }} />
-                                  )}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      } catch (error) {
-                        console.error('Error rendering payslip row:', error, p);
-                        return null;
-                      }
-                    }).filter(Boolean)
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={6} className="p-20 text-center">
+                          <Loader2 className="w-10 h-10 text-primary mx-auto animate-spin mb-4" />
+                          <p className="text-muted-foreground font-medium">Loading payslips...</p>
+                        </td>
+                      </tr>
+                    ) : filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-20 text-center">
+                          <div className="max-w-xs mx-auto">
+                            <Eye className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                            <p className="text-muted-foreground font-medium">No payslips found</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.map((p) => {
+                        if (!p || !p._id) return null;
 
+                        try {
+                          const employeeName = getEmployeeName(p);
+                          const employeeInitial = employeeName.charAt(0).toUpperCase();
+                          const monthName = new Date(p.year || 2024, (p.month || 1) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+                          return (
+                            <tr key={p._id} className={cn(
+                              "transition-colors hover:bg-muted/30",
+                              selected.includes(p._id) ? "bg-primary/5" : ""
+                            )}>
+                              <td className="p-4">
+                                <input type="checkbox" checked={selected.includes(p._id)} onChange={() => toggleSelect(p._id)} className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-white font-bold shadow-sm">
+                                    {employeeInitial}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-foreground m-0">{employeeName}</p>
+                                    <p className="text-xs text-muted-foreground m-0 font-mono tracking-tighter">{p._id}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="p-4 font-medium text-muted-foreground">
+                                {monthName}
+                              </td>
+                              <td className="p-4">
+                                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-lg text-sm font-bold border border-emerald-500/20">
+                                  ₹{(p.netSalary || 0).toLocaleString()}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className={cn(
+                                  "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                                  p.status === 'paid' ? "bg-emerald-500/20 text-emerald-500" : p.status === 'processed' ? "bg-primary/20 text-primary" : "bg-amber-500/20 text-amber-500"
+                                )}>
+                                  {p.status || 'pending'}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex gap-2 justify-end">
+                                  <button
+                                    disabled={!selected.includes(p._id)}
+                                    onClick={() => updateStatus('pending')}
+                                    className={cn(
+                                      "p-2 bg-card border border-border rounded-lg transition-all shadow-sm active:scale-95",
+                                      selected.includes(p._id) ? "hover:bg-amber-500/10 text-amber-500 hover:border-amber-500/30" : "grayscale opacity-30 cursor-not-allowed"
+                                    )}
+                                    title="Edit status"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handlePreview(p)}
+                                    className="p-2 bg-card text-primary border border-border rounded-lg hover:bg-primary/10 hover:border-primary/30 transition-all shadow-sm active:scale-95"
+                                    title="View details"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => downloadSingle(p)}
+                                    disabled={downloading === p._id}
+                                    className="p-2 bg-card text-emerald-500 border border-border rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all shadow-sm active:scale-95"
+                                    title="Download CSV"
+                                  >
+                                    {downloading === p._id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Download className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        } catch (error) {
+                          console.error('Error rendering payslip row:', error, p);
+                          return null;
+                        }
+                      }).filter(Boolean)
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </main>
       </div>
 
       {/* Preview Modal */}
       {preview && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          padding: '20px'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            maxWidth: '600px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            padding: '30px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Payslip Preview</h2>
-              <button
-                onClick={() => setPreview(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#666'
-                }}
-              >
-                ×
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[99999] p-4 animate-in fade-in duration-200">
+          <div className="bg-card text-card-foreground rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-border animate-in zoom-in-95 duration-200">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold m-0 text-foreground">Payslip Preview</h2>
+                <button
+                  onClick={() => setPreview(null)}
+                  className="bg-muted hover:bg-muted/80 p-2 rounded-full border-none cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span className="text-xl leading-none">×</span>
+                </button>
+              </div>
 
-            <div style={{ borderBottom: '2px solid #4f46e5', paddingBottom: '20px', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#4f46e5', margin: 0 }}>PayZenix Payroll</h3>
-              <p style={{ fontSize: '14px', color: '#666', margin: '4px 0 0 0' }}>Salary Slip</p>
-            </div>
+              <div className="border-b-4 border-primary pb-6 mb-8">
+                <h3 className="text-xl font-black text-primary uppercase tracking-tight m-0">PayZenix Payroll</h3>
+                <p className="text-sm text-muted-foreground font-semibold uppercase tracking-widest mt-1">Certified Monthly Salary Slip</p>
+              </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-              <div>
-                <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Employee</p>
-                <p style={{ fontSize: '16px', fontWeight: '500', margin: 0 }}>{getEmployeeName(preview)}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Employee Name</p>
+                    <p className="text-base font-bold text-foreground m-0">{getEmployeeName(preview)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Period</p>
+                    <p className="text-base font-bold text-foreground m-0">
+                      {new Date(preview.year || 2024, (preview.month || 1) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Employee Reference</p>
+                    <p className="text-base font-bold text-foreground m-0 font-mono tracking-tighter">
+                      {preview.employee && typeof preview.employee === 'object' ? preview.employee.employeeId : preview._id}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Verification Status</p>
+                    <span className={cn(
+                      "inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mt-1",
+                      preview.status === 'paid' ? "bg-emerald-500/20 text-emerald-500" : preview.status === 'processed' ? "bg-primary/20 text-primary" : "bg-amber-500/20 text-amber-500"
+                    )}>
+                      {preview.status || 'pending'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Employee ID</p>
-                <p style={{ fontSize: '16px', fontWeight: '500', margin: 0 }}>
-                  {preview.employee && typeof preview.employee === 'object' ? preview.employee.employeeId : preview._id}
-                </p>
-              </div>
-              <div>
-                <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Month</p>
-                <p style={{ fontSize: '16px', fontWeight: '500', margin: 0 }}>
-                  {new Date(preview.year || 2024, (preview.month || 1) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </p>
-              </div>
-              <div>
-                <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Status</p>
-                <span style={{
-                  padding: '4px 12px',
-                  background: preview.status === 'paid' ? '#dcfce7' : preview.status === 'processed' ? '#dbeafe' : '#fef3c7',
-                  color: preview.status === 'paid' ? '#166534' : preview.status === 'processed' ? '#1e40af' : '#92400e',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  textTransform: 'capitalize'
-                }}>
-                  {preview.status || 'pending'}
-                </span>
-              </div>
-            </div>
 
-            <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 12px 0' }}>Earnings</h4>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#666' }}>Basic Salary</span>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>₹{(preview.basicSalary || 0).toLocaleString()}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#666' }}>Gross Salary</span>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>₹{(preview.grossSalary || 0).toLocaleString()}</span>
-              </div>
-            </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div className="bg-muted/30 p-5 rounded-xl border border-border">
+                  <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Earnings Archive
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Basic Pay Component</span>
+                      <span className="font-bold text-foreground">₹{(preview.basicSalary || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-border/50">
+                      <span className="text-muted-foreground font-bold">Gross Total</span>
+                      <span className="font-black text-foreground">₹{(preview.grossSalary || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
 
-            <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 12px 0' }}>Deductions</h4>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#666' }}>PF</span>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>₹{(preview.deductions?.pf || 0).toLocaleString()}</span>
+                <div className="bg-muted/30 p-5 rounded-xl border border-border">
+                  <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                    Deduction Summary
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Provident Fund (PF)</span>
+                      <span className="font-bold text-destructive">₹{(preview.deductions?.pf || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">ESI Contribution</span>
+                      <span className="font-bold text-destructive">₹{(preview.deductions?.esi || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Income Tax (TDS)</span>
+                      <span className="font-bold text-destructive">₹{(preview.deductions?.tax || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#666' }}>ESI</span>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>₹{(preview.deductions?.esi || 0).toLocaleString()}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#666' }}>Tax</span>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>₹{(preview.deductions?.tax || 0).toLocaleString()}</span>
-              </div>
-            </div>
 
-            <div style={{ background: '#dcfce7', padding: '16px', borderRadius: '8px', border: '2px solid #16a34a' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '16px', fontWeight: '600', color: '#166534' }}>Net Salary</span>
-                <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#166534' }}>₹{(preview.netSalary || 0).toLocaleString()}</span>
+              <div className="bg-emerald-500/10 p-6 rounded-2xl border-2 border-emerald-500/30 mb-8">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 mb-1">Final Net Disbursement</p>
+                    <p className="text-xs text-emerald-600/70 font-medium">Verified by PayZenix Treasury System</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-black text-emerald-600 m-0">₹{(preview.netSalary || 0).toLocaleString()}</p>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setPreview(null)}
-                style={{
-                  padding: '10px 20px',
-                  background: 'white',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  downloadSingle(preview);
-                  setPreview(null);
-                }}
-                style={{
-                  padding: '10px 20px',
-                  background: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Download style={{ width: '16px', height: '16px' }} />
-                Download
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 justify-end mt-10">
+                <button
+                  onClick={() => setPreview(null)}
+                  className="px-6 py-2.5 bg-card text-card-foreground border border-border rounded-xl font-bold text-sm hover:bg-muted transition-all active:scale-95 shadow-sm"
+                >
+                  Return to Dashboard
+                </button>
+                <button
+                  onClick={() => {
+                    downloadSingle(preview);
+                    setPreview(null);
+                  }}
+                  className="px-6 py-2.5 bg-primary text-primary-foreground border-none rounded-xl font-extrabold text-sm hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download Verified Copy
+                </button>
+              </div>
             </div>
           </div>
         </div>

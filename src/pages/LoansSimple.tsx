@@ -8,6 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { useAuthStore } from '@/stores/authStore';
 import { hasPermission } from '@/utils/rbac';
 import { downloadLoansPDF } from '@/utils/downloadUtils';
+import { cn } from '@/lib/utils';
 
 export const LoansSimplePage = () => {
   const { user } = useAuthStore();
@@ -64,7 +65,7 @@ export const LoansSimplePage = () => {
 
   const handleSaveLoan = async (loanData: Partial<Loan>) => {
     setDialogOpen(false);
-    
+
     try {
       await loanAPI.create(loanData);
       toast.success('Loan created!', { duration: 3000, icon: '✅' });
@@ -117,12 +118,12 @@ export const LoansSimplePage = () => {
         l.status,
         new Date().toLocaleDateString()
       ]);
-      
+
       const csvContent = [
         headers.join(','),
         ...rows.map(row => row.join(','))
       ].join('\n');
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -145,9 +146,9 @@ export const LoansSimplePage = () => {
       if (!loan || !loan.employee) {
         return null; // Return null for invalid loans
       }
-      
+
       const employee = loan.employee;
-      
+
       // If employee is an object (populated), use it directly
       if (typeof employee === 'object' && employee !== null) {
         const empObj = employee as any;
@@ -155,22 +156,22 @@ export const LoansSimplePage = () => {
           return `${empObj.name} (${empObj.employeeId || 'N/A'})`;
         }
       }
-      
+
       // If employee is a string ID, look it up in employees array
       const loanEmployeeId = typeof employee === 'string' ? employee : (employee as any)?._id;
-      
+
       // Try exact match first
       let emp = employees.find(e => e && e._id === loanEmployeeId);
-      
+
       // If not found, try string comparison
       if (!emp && loanEmployeeId) {
         emp = employees.find(e => e && e._id?.toString() === loanEmployeeId.toString());
       }
-      
+
       if (emp) {
         return `${emp.name} (${emp.employeeId})`;
       }
-      
+
       // If employee not found, return null (will be filtered out)
       return null;
     } catch (error) {
@@ -182,13 +183,13 @@ export const LoansSimplePage = () => {
   // Filter out loans with deleted employees AND apply search/status filters
   const filteredLoans = loans.filter((loan) => {
     const employeeName = getEmployeeName(loan);
-    
+
     // Skip loans with deleted employees
     if (!employeeName) {
       console.warn('⚠️ Skipping loan with deleted employee:', loan._id);
       return false;
     }
-    
+
     const matchesSearch = employeeName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || loan.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -203,785 +204,485 @@ export const LoansSimplePage = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '50px', textAlign: 'center' }}>
-        <p style={{ fontSize: '18px' }}>Loading loans from backend...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-lg font-medium text-muted-foreground animate-pulse">
+          Loading loans from backend...
+        </p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div 
+      <div
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
         <Sidebar />
       </div>
-      <div 
-        style={{ 
-          marginLeft: sidebarCollapsed ? '80px' : '280px',
-          transition: 'margin-left 0.3s ease-in-out'
-        }}
+      <div
+        className={cn(
+          "transition-all duration-300",
+          sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+        )}
       >
         <Header />
-        <main className="p-6 animate-fadeIn">
-          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      <SimpleLoanForm
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        loan={editingLoan}
-        onSave={handleSaveLoan}
-        employees={employees.map(e => ({ _id: e._id!, name: e.name, employeeId: e.employeeId }))}
-      />
+        <main className="p-6 pt-24 animate-fadeIn">
+          <div className="max-w-[1400px] mx-auto">
+            <SimpleLoanForm
+              open={dialogOpen}
+              onClose={() => setDialogOpen(false)}
+              loan={editingLoan}
+              onSave={handleSaveLoan}
+              employees={employees.map(e => ({ _id: e._id!, name: e.name, employeeId: e.employeeId }))}
+            />
 
-      {/* Header */}
-      <div style={{ marginBottom: '30px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div>
-            <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>Loans & Advances</h1>
-            <p style={{ color: '#666', fontSize: '14px' }}>
-              Manage employee loans and salary advances ({loans.length} loans)
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {canExport && (
-              <>
-                <button
-                  onClick={async () => {
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+              <div>
+                <h1 className="text-3xl font-extrabold text-foreground mb-1 uppercase tracking-tight">Loans & Advances</h1>
+                <p className="text-muted-foreground text-sm font-medium">Manage employee loan applications and recovery ({loans.length})</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <input
+                    type="text"
+                    placeholder="Search by ID or Name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-card text-card-foreground border border-border rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all w-[240px] shadow-sm font-medium"
+                  />
+                </div>
+
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-card text-card-foreground border border-border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all shadow-sm cursor-pointer font-bold"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+
+                <div className="flex items-center gap-2">
+                  {canExport && (
+                    <>
+                      <button
+                        onClick={async () => {
+                          try {
+                            toast.loading('Generating Loans PDF...', { id: 'loans-pdf' });
+                            await downloadLoansPDF(loans);
+                            toast.success('Loans PDF downloaded!', { id: 'loans-pdf' });
+                          } catch (error) {
+                            toast.error('Failed to download PDF', { id: 'loans-pdf' });
+                          }
+                        }}
+                        className="p-2.5 bg-card text-card-foreground hover:bg-muted border border-border rounded-xl transition-all shadow-sm active:scale-95"
+                        title="Export to PDF"
+                      >
+                        <FileText className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={handleExport}
+                        className="p-2.5 bg-card text-card-foreground hover:bg-muted border border-border rounded-xl transition-all shadow-sm active:scale-95"
+                        title="Export CSV"
+                      >
+                        <Download className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+
+                  {canAdd && (
+                    <button
+                      onClick={handleAddLoan}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground border-none rounded-xl px-4 py-2.5 text-sm font-black flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20 uppercase tracking-widest"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Loan
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="p-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-xl shadow-indigo-500/20 transform hover:-translate-y-1 transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <Wallet className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-black uppercase tracking-widest opacity-90">Total Disbursed</p>
+                </div>
+                <p className="text-4xl font-black mb-1">₹{(stats.totalDisbursed / 1000).toFixed(0)}K</p>
+                <p className="text-xs font-medium opacity-75">{loans.length} active records</p>
+              </div>
+
+              <div className="p-6 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl text-white shadow-xl shadow-emerald-500/20 transform hover:-translate-y-1 transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-black uppercase tracking-widest opacity-90">Total Recovered</p>
+                </div>
+                <p className="text-4xl font-black mb-1">₹{(stats.totalRecovered / 1000).toFixed(0)}K</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-white transition-all duration-1000"
+                      style={{ width: `${stats.totalDisbursed > 0 ? (stats.totalRecovered / stats.totalDisbursed) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-black">{stats.totalDisbursed > 0 ? Math.round((stats.totalRecovered / stats.totalDisbursed) * 100) : 0}%</span>
+                </div>
+              </div>
+
+              <div className="p-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl text-white shadow-xl shadow-blue-500/20 transform hover:-translate-y-1 transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-black uppercase tracking-widest opacity-90">Active Loans</p>
+                </div>
+                <p className="text-4xl font-black mb-1">{stats.activeLoans}</p>
+                <p className="text-xs font-medium opacity-75">Currently in repayment</p>
+              </div>
+
+              <div className="p-6 bg-gradient-to-br from-rose-500 to-orange-500 rounded-2xl text-white shadow-xl shadow-rose-500/20 transform hover:-translate-y-1 transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <XCircle className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-black uppercase tracking-widest opacity-90">Pending Approval</p>
+                </div>
+                <p className="text-4xl font-black mb-1">{stats.pendingLoans}</p>
+                <p className="text-xs font-medium opacity-75">Awaiting admin review</p>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div key={`loans-table-${updateKey}`} className="bg-card text-card-foreground rounded-2xl border border-border shadow-lg overflow-hidden">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-muted/50 border-b border-border">
+                    <th className="px-6 py-4 text-left text-xs font-black text-muted-foreground uppercase tracking-widest">Employee</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-muted-foreground uppercase tracking-widest">Loan Type</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-muted-foreground uppercase tracking-widest">Amount</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-muted-foreground uppercase tracking-widest">EMI</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-muted-foreground uppercase tracking-widest">Remaining</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-muted-foreground uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-muted-foreground uppercase tracking-widest">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredLoans.map((loan) => {
+                    if (!loan || !loan._id) return null;
+
                     try {
-                      toast.loading('Generating Loans PDF...', { id: 'loans-pdf' });
-                      await downloadLoansPDF(loans);
-                      toast.success('Loans PDF downloaded!', { id: 'loans-pdf' });
+                      const progress = loan.amount > 0 ? ((loan.paidAmount || 0) / loan.amount) * 100 : 0;
+                      const employeeName = getEmployeeName(loan);
+                      const remainingEMIs = loan.emiAmount > 0 ? Math.ceil((loan.remainingAmount || 0) / loan.emiAmount) : 0;
+
+                      // Use a unique key that includes status to force re-render when status changes
+                      const uniqueKey = `${loan._id}-${loan.status}-${(loan as any)._updatedAt || ''}`;
+
+                      const initials = employeeName.split(' ').map((n: string) => n[0] || '').join('').toUpperCase() || 'U';
+
+                      return (
+                        <tr key={uniqueKey} className="hover:bg-muted/30 transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+                                {initials}
+                              </div>
+                              <div>
+                                <p className="font-bold text-foreground text-sm m-0">{employeeName}</p>
+                                <p className="text-[10px] text-muted-foreground font-mono mt-0.5 uppercase tracking-tighter">{loan._id}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-muted text-muted-foreground border border-border">
+                              {loan.loanType || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm font-black text-foreground">
+                            ₹{(loan.amount || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div>
+                              <p className="text-sm font-black text-foreground m-0">₹{(loan.emiAmount || 0).toLocaleString('en-IN')}</p>
+                              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter m-0">
+                                {remainingEMIs} EMIs left
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div>
+                              <p className="text-sm font-black text-primary m-0">₹{(loan.remainingAmount || 0).toLocaleString('en-IN')}</p>
+                              <div className="w-20 ml-auto mt-1.5">
+                                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-emerald-500 transition-all duration-500"
+                                    style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={cn(
+                              "inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                              loan.status === 'active' ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
+                                loan.status === 'completed' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                                  loan.status === 'pending' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                                    loan.status === 'approved' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                                      "bg-destructive/10 text-destructive border-destructive/20"
+                            )}>
+                              {loan.status || 'pending'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {loan.status === 'pending' && canApprove && (
+                                <>
+                                  <button
+                                    onClick={() => loan._id && handleApproveLoan(loan._id, 'approved')}
+                                    className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-all active:scale-95 shadow-lg shadow-emerald-500/20"
+                                    title="Approve Loan"
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => loan._id && handleApproveLoan(loan._id, 'rejected')}
+                                    className="p-2 bg-destructive hover:bg-destructive/90 text-white rounded-lg transition-all active:scale-95 shadow-lg shadow-destructive/20"
+                                    title="Reject Loan"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={() => setViewModal({ show: true, loan })}
+                                className="p-2 bg-card text-card-foreground hover:bg-muted border border-border rounded-lg transition-all"
+                                title="View Loan Details"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
                     } catch (error) {
-                      toast.error('Failed to download PDF', { id: 'loans-pdf' });
+                      console.error('Error rendering loan row:', error, loan);
+                      return null;
                     }
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    background: 'white',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <FileText style={{ width: '16px', height: '16px' }} />
-                  PDF
-                </button>
-                <button
-                  onClick={handleExport}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    background: 'white',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <Download style={{ width: '16px', height: '16px' }} />
-                  CSV
-                </button>
-              </>
-            )}
-            {canAdd && (
-              <button
-                onClick={handleAddLoan}
-                style={{
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  background: '#4f46e5',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Plus style={{ width: '16px', height: '16px' }} />
-                Add Loan
-              </button>
-            )}
-            {!canAdd && !canExport && (
-              <div style={{
-                padding: '8px 16px',
-                background: '#f3f4f6',
-                borderRadius: '6px',
-                fontSize: '14px',
-                color: '#666'
-              }}>
-                View Only Mode
+                  }).filter(Boolean)}
+                  {filteredLoans.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-20 text-center">
+                        <div className="flex flex-col items-center justify-center gap-4">
+                          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+                            <Wallet className="w-8 h-8 text-muted-foreground opacity-50" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-foreground mb-1">No loans found</p>
+                            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                              {searchQuery ? `We couldn't find any results for "${searchQuery}"` : 'Your loan records and applications will appear here.'}
+                            </p>
+                          </div>
+                          {!searchQuery && canAdd && (
+                            <button
+                              onClick={handleAddLoan}
+                              className="mt-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-xl text-sm font-black transition-all active:scale-95 shadow-lg shadow-primary/20"
+                            >
+                              Create Your First Loan
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Approve/Reject Confirmation Modal */}
+            {approveModal.show && (
+              <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-[9999] animate-fadeIn p-4">
+                <div className="bg-card text-card-foreground rounded-2xl p-8 max-w-md w-full shadow-2xl border border-border">
+                  <div className="mb-6">
+                    <h3 className="text-2xl font-black text-foreground mb-2">
+                      {approveModal.loan?.status === 'approved' ? 'Approve Loan' : 'Reject Loan'}
+                    </h3>
+                    <p className="text-muted-foreground font-medium">
+                      Are you sure you want to {approveModal.loan?.status} this loan application? This action will be recorded and cannot be undone.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-4 justify-end">
+                    <button
+                      onClick={() => setApproveModal({ show: false, loan: null })}
+                      className="px-6 py-2.5 bg-card text-card-foreground hover:bg-muted border border-border rounded-xl font-bold transition-all active:scale-95"
+                    >
+                      Go Back
+                    </button>
+                    <button
+                      onClick={confirmApprove}
+                      className={cn(
+                        "px-6 py-2.5 rounded-xl font-black text-white transition-all active:scale-95 shadow-lg",
+                        approveModal.loan?.status === 'approved' ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20" : "bg-destructive hover:bg-destructive/90 shadow-destructive/20"
+                      )}
+                    >
+                      {approveModal.loan?.status === 'approved' ? 'Yes, Approve' : 'Yes, Reject'}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Search and Filter */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-            <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#999' }} />
-            <input
-              type="text"
-              placeholder="Search by employee name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px 8px 40px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              minWidth: '150px'
-            }}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="rejected">Rejected</option>
-          </select>
-        </div>
-      </div>
+            {/* View Loan Details Modal */}
+            {viewModal.show && viewModal.loan && (
+              <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-[9999] animate-fadeIn p-4">
+                <div className="bg-card text-card-foreground rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-border animate-in zoom-in duration-300">
+                  {/* Header */}
+                  <div className="p-8 bg-gradient-to-br from-indigo-500 to-purple-600 text-white relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent)]" />
+                    <h3 className="text-3xl font-black mb-2 relative z-10">Loan Details</h3>
+                    <p className="text-indigo-100 font-medium relative z-10 opacity-90">
+                      {getEmployeeName(viewModal.loan)}
+                    </p>
+                  </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-        <div className="stat-card animate-slideUp stagger-1" style={{ padding: '20px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-            <Wallet style={{ width: '24px', height: '24px' }} />
-            <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Total Disbursed</p>
-          </div>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>₹{(stats.totalDisbursed / 1000).toFixed(0)}K</p>
-          <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>{loans.length} loans</p>
-        </div>
-        <div className="stat-card animate-slideUp stagger-2" style={{ padding: '20px', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(240, 147, 251, 0.3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-            <CheckCircle style={{ width: '24px', height: '24px' }} />
-            <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Total Recovered</p>
-          </div>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
-            ₹{(stats.totalRecovered / 1000).toFixed(0)}K
-          </p>
-          <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>
-            {stats.totalDisbursed > 0 ? Math.round((stats.totalRecovered / stats.totalDisbursed) * 100) : 0}% recovered
-          </p>
-        </div>
-        <div className="stat-card animate-slideUp stagger-3" style={{ padding: '20px', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(79, 172, 254, 0.3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-            <Clock style={{ width: '24px', height: '24px' }} />
-            <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Active Loans</p>
-          </div>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
-            {stats.activeLoans}
-          </p>
-          <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Currently active</p>
-        </div>
-        <div className="stat-card animate-slideUp stagger-4" style={{ padding: '20px', background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(250, 112, 154, 0.3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-            <XCircle style={{ width: '24px', height: '24px' }} />
-            <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Pending Approval</p>
-          </div>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
-            {stats.pendingLoans}
-          </p>
-          <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Awaiting review</p>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div key={`loans-table-${updateKey}`} style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f9fafb' }}>
-            <tr>
-              <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Employee</th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Loan Type</th>
-              <th style={{ padding: '12px 16px', textAlign: 'right', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Amount</th>
-              <th style={{ padding: '12px 16px', textAlign: 'right', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>EMI</th>
-              <th style={{ padding: '12px 16px', textAlign: 'right', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Remaining</th>
-              <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Status</th>
-              <th style={{ padding: '12px 16px', textAlign: 'right', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredLoans.map((loan) => {
-              if (!loan || !loan._id) return null;
-              
-              try {
-                const progress = loan.amount > 0 ? ((loan.paidAmount || 0) / loan.amount) * 100 : 0;
-                const employeeName = getEmployeeName(loan);
-                const remainingEMIs = loan.emiAmount > 0 ? Math.ceil((loan.remainingAmount || 0) / loan.emiAmount) : 0;
-                
-                // Use a unique key that includes status to force re-render when status changes
-                const uniqueKey = `${loan._id}-${loan.status}-${(loan as any)._updatedAt || ''}`;
-                
-                return (
-                  <tr key={uniqueKey} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div>
-                        <p style={{ fontWeight: '500', margin: 0, marginBottom: '4px' }}>{employeeName}</p>
-                        <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{loan._id}</p>
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        background: '#f3f4f6',
-                        color: '#374151'
-                      }}>
-                        {loan.loanType || 'N/A'}
+                  {/* Content */}
+                  <div className="p-8 overflow-y-auto max-h-[calc(90vh-140px)] custom-scrollbar">
+                    {/* Status Badge */}
+                    <div className="flex justify-center mb-8">
+                      <span className={cn(
+                        "px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest border shadow-sm",
+                        viewModal.loan.status === 'active' ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
+                          viewModal.loan.status === 'completed' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                            viewModal.loan.status === 'pending' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                              viewModal.loan.status === 'approved' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                                "bg-destructive/10 text-destructive border-destructive/20"
+                      )}>
+                        {viewModal.loan.status}
                       </span>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '500' }}>
-                      ₹{(loan.amount || 0).toLocaleString('en-IN')}
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                      <div>
-                        <p style={{ fontWeight: '500', margin: 0 }}>₹{(loan.emiAmount || 0).toLocaleString('en-IN')}</p>
-                        <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                          {remainingEMIs} EMIs left
-                        </p>
+                    </div>
+
+                    {/* Loan Information Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-muted/50 rounded-2xl border border-border flex flex-col gap-1 transition-colors hover:bg-muted">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Loan ID</span>
+                        <span className="font-mono text-sm font-bold text-foreground">{viewModal.loan._id}</span>
                       </div>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                      <div>
-                        <p style={{ fontWeight: '500', margin: 0 }}>₹{(loan.remainingAmount || 0).toLocaleString('en-IN')}</p>
-                        <div style={{ width: '80px', marginLeft: 'auto', marginTop: '4px' }}>
-                          <div style={{ background: '#e5e7eb', height: '4px', borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ 
-                              background: '#10b981', 
-                              height: '100%', 
-                              width: `${Math.min(100, Math.max(0, progress))}%`,
-                              transition: 'width 0.3s'
-                            }} />
+
+                      <div className="p-4 bg-muted/50 rounded-2xl border border-border flex flex-col gap-1 transition-colors hover:bg-muted">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Loan Type</span>
+                        <span className="text-sm font-bold text-foreground capitalize">{viewModal.loan.loanType || 'N/A'}</span>
+                      </div>
+
+                      <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex flex-col gap-1">
+                        <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Loan Amount</span>
+                        <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                          ₹{(viewModal.loan.amount || 0).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <div className="p-4 bg-muted/50 rounded-2xl border border-border flex flex-col gap-1 transition-colors hover:bg-muted">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Interest Rate</span>
+                        <span className="text-sm font-bold text-foreground">{viewModal.loan.interestRate || 0}% per annum</span>
+                      </div>
+
+                      <div className="p-4 bg-muted/50 rounded-2xl border border-border flex flex-col gap-1 transition-colors hover:bg-muted">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Tenure</span>
+                        <span className="text-sm font-bold text-foreground">{viewModal.loan.tenure || 0} months</span>
+                      </div>
+
+                      <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20 flex flex-col gap-1">
+                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Monthly EMI</span>
+                        <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                          ₹{(viewModal.loan.emiAmount || 0).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <div className="p-4 bg-muted/50 rounded-2xl border border-border flex flex-col gap-1 transition-colors hover:bg-muted">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Paid Amount</span>
+                        <span className="text-sm font-bold text-emerald-500">₹{(viewModal.loan.paidAmount || 0).toLocaleString('en-IN')}</span>
+                      </div>
+
+                      <div className="p-4 bg-amber-500/10 rounded-2xl border border-amber-500/20 flex flex-col gap-1">
+                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Remaining</span>
+                        <span className="text-xl font-black text-amber-600 dark:text-amber-400">₹{(viewModal.loan.remainingAmount || 0).toLocaleString('en-IN')}</span>
+                      </div>
+
+                      <div className="p-4 bg-muted/50 rounded-2xl border border-border flex flex-col gap-1 transition-colors hover:bg-muted">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Start Date</span>
+                        <span className="text-sm font-bold text-foreground">
+                          {viewModal.loan.startDate ? new Date(viewModal.loan.startDate).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          }) : 'N/A'}
+                        </span>
+                      </div>
+
+                      {viewModal.loan.reason && (
+                        <div className="p-4 bg-muted/50 rounded-2xl border border-border transition-colors hover:bg-muted">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Reason</span>
+                          <p className="text-sm font-medium text-foreground">{viewModal.loan.reason}</p>
+                        </div>
+                      )}
+
+                      {viewModal.loan.remarks && (
+                        <div className="p-4 bg-muted/50 rounded-2xl border border-border transition-colors hover:bg-muted">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Remarks</span>
+                          <p className="text-sm font-medium text-foreground">{viewModal.loan.remarks}</p>
+                        </div>
+                      )}
+
+                      {/* Progress Section */}
+                      <div className="md:col-span-2 p-6 bg-muted/30 rounded-2xl border border-border mt-2">
+                        <div className="flex justify-between items-end mb-4">
+                          <div>
+                            <h4 className="text-xs font-black text-foreground uppercase tracking-widest mb-1">Repayment Progress</h4>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">
+                              {viewModal.loan.amount > 0 ? Math.round(((viewModal.loan.paidAmount || 0) / viewModal.loan.amount) * 100) : 0}% Recovered
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-lg font-black text-primary">₹{(viewModal.loan.paidAmount || 0).toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] text-muted-foreground block font-bold uppercase tracking-tighter">of total loan</span>
                           </div>
                         </div>
+                        <div className="h-3 bg-muted rounded-full overflow-hidden p-0.5 border border-border shadow-inner">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-1000 shadow-lg shadow-indigo-500/20"
+                            style={{ width: `${viewModal.loan.amount > 0 ? Math.min(100, ((viewModal.loan.paidAmount || 0) / viewModal.loan.amount) * 100) : 0}%` }}
+                          />
+                        </div>
                       </div>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        background: 
-                          loan.status === 'active' ? '#dbeafe' :
-                          loan.status === 'completed' ? '#dcfce7' :
-                          loan.status === 'pending' ? '#fef3c7' :
-                          loan.status === 'approved' ? '#d1fae5' :
-                          '#fee2e2',
-                        color: 
-                          loan.status === 'active' ? '#1e40af' :
-                          loan.status === 'completed' ? '#166534' :
-                          loan.status === 'pending' ? '#92400e' :
-                          loan.status === 'approved' ? '#065f46' :
-                          '#991b1b'
-                      }}>
-                        {loan.status || 'pending'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                        {loan.status === 'pending' && canApprove && (
-                          <>
-                            <button
-                              onClick={() => loan._id && handleApproveLoan(loan._id, 'approved')}
-                              style={{
-                                padding: '6px 12px',
-                                background: '#10b981',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}
-                            >
-                              <CheckCircle style={{ width: '14px', height: '14px' }} />
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => loan._id && handleApproveLoan(loan._id, 'rejected')}
-                              style={{
-                                padding: '6px 12px',
-                                background: 'white',
-                                color: '#dc2626',
-                                border: '1px solid #dc2626',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}
-                            >
-                              <XCircle style={{ width: '14px', height: '14px' }} />
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {loan.status !== 'pending' && (
-                          <button
-                            onClick={() => setViewModal({ show: true, loan })}
-                            style={{
-                              padding: '6px 12px',
-                              background: 'white',
-                              border: '1px solid #d1d5db',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                            title="View Loan Details"
-                          >
-                            <Eye style={{ width: '14px', height: '14px' }} />
-                          </button>
-                        )}
-                        {loan.status === 'pending' && !canApprove && (
-                          <span style={{
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            color: '#666',
-                            fontStyle: 'italic'
-                          }}>
-                            Pending Approval
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              } catch (error) {
-                console.error('Error rendering loan row:', error, loan);
-                return null;
-              }
-            }).filter(Boolean)}
-          </tbody>
-        </table>
+                    </div>
+                  </div>
 
-        {filteredLoans.length === 0 && (
-          <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-            <p style={{ color: '#666', fontSize: '16px', margin: 0 }}>
-              {searchQuery ? 'No loans found matching your search.' : 'No loans in the database.'}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={handleAddLoan}
-                style={{
-                  marginTop: '20px',
-                  padding: '10px 20px',
-                  background: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Plus style={{ width: '16px', height: '16px' }} />
-                Create Your First Loan
-              </button>
+                  {/* Footer */}
+                  <div className="p-6 bg-muted/20 border-t border-border flex justify-end">
+                    <button
+                      onClick={() => setViewModal({ show: false, loan: null })}
+                      className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-sm rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/25 uppercase tracking-widest"
+                    >
+                      Close Details
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
-          </div>
-        )}
-      </div>
-
-      {/* Approve/Reject Confirmation Modal */}
-      {approveModal.show && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            minWidth: '400px',
-            maxWidth: '480px',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-          }}>
-            {/* Header */}
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ 
-                margin: 0, 
-                fontSize: '20px', 
-                fontWeight: '600',
-                color: '#111827',
-                marginBottom: '8px'
-              }}>
-                {approveModal.loan?.status === 'approved' ? 'Approve Loan' : 'Reject Loan'}
-              </h3>
-              <p style={{ 
-                margin: 0, 
-                fontSize: '14px',
-                color: '#6b7280',
-                lineHeight: '1.5'
-              }}>
-                Are you sure you want to {approveModal.loan?.status} this loan? This action cannot be undone.
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setApproveModal({ show: false, loan: null })}
-                style={{
-                  padding: '10px 20px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  background: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmApprove}
-                style={{
-                  padding: '10px 20px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  background: approveModal.loan?.status === 'approved' ? '#16a34a' : '#dc2626',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                {approveModal.loan?.status === 'approved' ? 'Approve' : 'Reject'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* View Loan Details Modal */}
-      {viewModal.show && viewModal.loan && (
-        <div className="modal-backdrop" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          padding: '20px'
-        }}>
-          <div className="modal-content animate-zoomIn" style={{
-            background: 'white',
-            borderRadius: '12px',
-            maxWidth: '600px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-          }}>
-            {/* Header */}
-            <div style={{
-              padding: '24px',
-              borderBottom: '1px solid #e5e7eb',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '12px 12px 0 0'
-            }}>
-              <h3 style={{ 
-                margin: 0, 
-                fontSize: '24px', 
-                fontWeight: '600',
-                color: 'white',
-                marginBottom: '8px'
-              }}>
-                Loan Details
-              </h3>
-              <p style={{ 
-                margin: 0, 
-                fontSize: '14px',
-                color: 'rgba(255,255,255,0.9)'
-              }}>
-                {getEmployeeName(viewModal.loan)}
-              </p>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: '24px' }}>
-              {/* Status Badge */}
-              <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-                <span style={{
-                  padding: '8px 24px',
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  display: 'inline-block',
-                  background: 
-                    viewModal.loan.status === 'active' ? '#dbeafe' :
-                    viewModal.loan.status === 'completed' ? '#dcfce7' :
-                    viewModal.loan.status === 'pending' ? '#fef3c7' :
-                    viewModal.loan.status === 'approved' ? '#d1fae5' :
-                    '#fee2e2',
-                  color: 
-                    viewModal.loan.status === 'active' ? '#1e40af' :
-                    viewModal.loan.status === 'completed' ? '#166534' :
-                    viewModal.loan.status === 'pending' ? '#92400e' :
-                    viewModal.loan.status === 'approved' ? '#065f46' :
-                    '#991b1b'
-                }}>
-                  {viewModal.loan.status?.toUpperCase()}
-                </span>
-              </div>
-
-              {/* Loan Information Grid */}
-              <div style={{ display: 'grid', gap: '16px' }}>
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#f9fafb', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#666', fontSize: '14px' }}>Loan ID</span>
-                  <span style={{ fontWeight: '600', fontSize: '14px', fontFamily: 'monospace' }}>
-                    {viewModal.loan._id}
-                  </span>
-                </div>
-
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#f9fafb', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#666', fontSize: '14px' }}>Loan Type</span>
-                  <span style={{ fontWeight: '600', fontSize: '14px', textTransform: 'capitalize' }}>
-                    {viewModal.loan.loanType || 'N/A'}
-                  </span>
-                </div>
-
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#dcfce7', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#166534', fontSize: '14px', fontWeight: '500' }}>Loan Amount</span>
-                  <span style={{ fontWeight: '700', fontSize: '20px', color: '#166534' }}>
-                    ₹{(viewModal.loan.amount || 0).toLocaleString('en-IN')}
-                  </span>
-                </div>
-
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#f9fafb', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#666', fontSize: '14px' }}>Interest Rate</span>
-                  <span style={{ fontWeight: '600', fontSize: '14px' }}>
-                    {viewModal.loan.interestRate || 0}% per annum
-                  </span>
-                </div>
-
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#f9fafb', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#666', fontSize: '14px' }}>Tenure</span>
-                  <span style={{ fontWeight: '600', fontSize: '14px' }}>
-                    {viewModal.loan.tenure || 0} months
-                  </span>
-                </div>
-
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#dbeafe', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#1e40af', fontSize: '14px', fontWeight: '500' }}>Monthly EMI</span>
-                  <span style={{ fontWeight: '700', fontSize: '18px', color: '#1e40af' }}>
-                    ₹{(viewModal.loan.emiAmount || 0).toLocaleString('en-IN')}
-                  </span>
-                </div>
-
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#f9fafb', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#666', fontSize: '14px' }}>Paid Amount</span>
-                  <span style={{ fontWeight: '600', fontSize: '14px', color: '#16a34a' }}>
-                    ₹{(viewModal.loan.paidAmount || 0).toLocaleString('en-IN')}
-                  </span>
-                </div>
-
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#fef3c7', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#92400e', fontSize: '14px', fontWeight: '500' }}>Remaining Amount</span>
-                  <span style={{ fontWeight: '700', fontSize: '18px', color: '#92400e' }}>
-                    ₹{(viewModal.loan.remainingAmount || 0).toLocaleString('en-IN')}
-                  </span>
-                </div>
-
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#f9fafb', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ color: '#666', fontSize: '14px' }}>Start Date</span>
-                  <span style={{ fontWeight: '600', fontSize: '14px' }}>
-                    {viewModal.loan.startDate ? new Date(viewModal.loan.startDate).toLocaleDateString('en-IN', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    }) : 'N/A'}
-                  </span>
-                </div>
-
-                {viewModal.loan.reason && (
-                  <div style={{ 
-                    padding: '16px', 
-                    background: '#f9fafb', 
-                    borderRadius: '8px'
-                  }}>
-                    <span style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Reason</span>
-                    <span style={{ fontWeight: '500', fontSize: '14px' }}>
-                      {viewModal.loan.reason}
-                    </span>
-                  </div>
-                )}
-
-                {viewModal.loan.remarks && (
-                  <div style={{ 
-                    padding: '16px', 
-                    background: '#f9fafb', 
-                    borderRadius: '8px'
-                  }}>
-                    <span style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Remarks</span>
-                    <span style={{ fontWeight: '500', fontSize: '14px' }}>
-                      {viewModal.loan.remarks}
-                    </span>
-                  </div>
-                )}
-
-                {/* Progress Bar */}
-                <div style={{ 
-                  padding: '16px', 
-                  background: '#f9fafb', 
-                  borderRadius: '8px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#666', fontSize: '14px' }}>Repayment Progress</span>
-                    <span style={{ fontWeight: '600', fontSize: '14px' }}>
-                      {viewModal.loan.amount > 0 ? Math.round(((viewModal.loan.paidAmount || 0) / viewModal.loan.amount) * 100) : 0}%
-                    </span>
-                  </div>
-                  <div style={{ background: '#e5e7eb', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)', 
-                      height: '100%', 
-                      width: `${viewModal.loan.amount > 0 ? Math.min(100, ((viewModal.loan.paidAmount || 0) / viewModal.loan.amount) * 100) : 0}%`,
-                      transition: 'width 0.3s',
-                      borderRadius: '4px'
-                    }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div style={{ 
-              padding: '16px 24px', 
-              background: '#f9fafb',
-              display: 'flex', 
-              justifyContent: 'flex-end',
-              borderTop: '1px solid #e5e7eb',
-              borderRadius: '0 0 12px 12px'
-            }}>
-              <button
-                onClick={() => setViewModal({ show: false, loan: null })}
-                style={{
-                  padding: '10px 28px',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
           </div>
         </main>
       </div>

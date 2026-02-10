@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { employeeAPI, Employee } from '@/services/api';
 import toast from 'react-hot-toast';
-import { Plus, Download, Edit, Trash2, Mail, Search, FileText, Users, CheckCircle, Clock, User } from 'lucide-react';
+import { Plus, Download, Edit, Trash2, Mail, Search, FileText, Users, CheckCircle, Clock, User, RefreshCw } from 'lucide-react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { useAuthStore } from '@/stores/authStore';
 import { hasPermission } from '@/utils/rbac';
 import { downloadEmployeesPDF, downloadEmployeesCSV } from '@/utils/downloadUtils';
+import { cn } from '@/lib/utils';
 
 export const EmployeesWorkingPage = () => {
   const { user } = useAuthStore();
@@ -85,14 +86,14 @@ export const EmployeesWorkingPage = () => {
 
   const handleEditClick = (employee: Employee) => {
     console.log('🟢 EDIT CLICKED!', employee);
-    
+
     // Extra safety check
     if (!employee || !employee._id || !employee.name) {
       console.error('Invalid employee data for edit:', employee);
       toast.error('Cannot edit invalid employee data');
       return;
     }
-    
+
     setEditingEmployee(employee);
     setFormData({
       employeeId: employee.employeeId || '',
@@ -110,23 +111,23 @@ export const EmployeesWorkingPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.employeeId) {
       toast.error('Please fill in all required fields');
       return;
     }
-    
+
     const saveData = {
       ...formData,
       salary: Number(formData.salary),
     };
-    
+
     const wasEditing = !!editingEmployee;
     const editingId = editingEmployee?._id;
-    
+
     try {
       console.log('🔄 Starting API call...', wasEditing ? 'UPDATE' : 'CREATE');
-      
+
       if (wasEditing && editingId) {
         const result = await employeeAPI.update(editingId, saveData);
         console.log('✅ API UPDATE SUCCESS:', result);
@@ -136,15 +137,15 @@ export const EmployeesWorkingPage = () => {
         console.log('✅ API CREATE SUCCESS:', result);
         toast.success('Employee added!', { duration: 3000, icon: '✅' });
       }
-      
+
       // Close form AFTER successful API call
       setShowForm(false);
       setEditingEmployee(null);
-      
+
       // Reload data immediately
       console.log('🔄 Reloading employees data...');
       await loadEmployees();
-      
+
     } catch (error: any) {
       console.error('❌ API CALL FAILED:', error);
       toast.error(error.message || 'Failed to save employee');
@@ -153,21 +154,21 @@ export const EmployeesWorkingPage = () => {
 
   const confirmDelete = async () => {
     if (!deleteModal.employee) return;
-    
+
     const employeeId = deleteModal.employee.id;
-    
+
     try {
       await employeeAPI.delete(employeeId);
-      
+
       // Close modal AFTER successful delete
       setDeleteModal({ show: false, employee: null });
-      
+
       toast.success('Employee deleted!', { duration: 3000, icon: '✅' });
-      
+
       // Reload data immediately
       console.log('🔄 Reloading employees after delete...');
       await loadEmployees();
-      
+
     } catch (error: any) {
       console.error('Delete error:', error);
       setDeleteModal({ show: false, employee: null });
@@ -189,7 +190,7 @@ export const EmployeesWorkingPage = () => {
     if (!emp || !emp._id || !emp.name) {
       return false;
     }
-    
+
     try {
       const searchLower = searchQuery.toLowerCase();
       return (
@@ -206,21 +207,24 @@ export const EmployeesWorkingPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div 
+        <div
           onMouseEnter={() => setSidebarCollapsed(false)}
           onMouseLeave={() => setSidebarCollapsed(true)}
         >
           <Sidebar />
         </div>
-        <div 
-          style={{ 
-            marginLeft: sidebarCollapsed ? '80px' : '280px',
-            transition: 'margin-left 0.3s ease-in-out'
-          }}
+        <div
+          className={cn(
+            "transition-all duration-300",
+            sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+          )}
         >
           <Header />
           <main className="p-6">
-            <div style={{ padding: '50px', textAlign: 'center' }}>Loading...</div>
+            <div className="py-20 text-center">
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto text-primary mb-4" />
+              <p className="text-muted-foreground">Loading employees...</p>
+            </div>
           </main>
         </div>
       </div>
@@ -229,82 +233,57 @@ export const EmployeesWorkingPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div 
+      <div
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
         <Sidebar />
       </div>
-      <div 
-        style={{ 
-          marginLeft: sidebarCollapsed ? '80px' : '280px',
-          transition: 'margin-left 0.3s ease-in-out'
-        }}
+      <div
+        className={cn(
+          "transition-all duration-300",
+          sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+        )}
       >
         <Header />
-        <main className="p-6 animate-fadeIn">
-          <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
+        <main className="p-6">
+          <div className="max-w-[1400px] mx-auto relative">
             {/* Error Display */}
             {renderError && (
-              <div style={{
-                padding: '16px',
-                background: '#fee2e2',
-                border: '1px solid #dc2626',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                color: '#991b1b'
-              }}>
-                <h3 style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>Render Error Detected</h3>
-                <p style={{ margin: 0, fontSize: '14px' }}>{renderError.message}</p>
+              <div className="p-4 bg-destructive/10 border border-destructive rounded-lg mb-6 text-destructive">
+                <h3 className="m-0 font-bold mb-2">Render Error Detected</h3>
+                <p className="m-0 text-sm">{renderError.message}</p>
                 <button
                   onClick={() => {
                     setRenderError(null);
                     window.location.reload();
                   }}
-                  style={{
-                    marginTop: '12px',
-                    padding: '8px 16px',
-                    background: '#dc2626',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
+                  className="mt-3 px-4 py-2 bg-destructive text-destructive-foreground border-none rounded-md cursor-pointer text-sm hover:bg-destructive/90 transition-colors"
                 >
                   Reload Page
                 </button>
               </div>
             )}
-            
+
             {/* Header */}
-            <div style={{ marginBottom: '30px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>Employees</h1>
-                  <p style={{ color: '#666', fontSize: '14px' }}>
+                  <h1 className="text-3xl font-bold mb-1.5 text-foreground text-gradient">Employees</h1>
+                  <p className="text-muted-foreground text-sm">
                     Manage your organization's workforce ({employees.length} employees)
                   </p>
-                  {/* TEST BUTTON - Remove after testing */}
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="flex gap-2.5">
                   <button
                     onClick={() => {
                       console.log('🔄 Manual refresh clicked');
                       setUpdateKey(prev => prev + 1);
                     }}
-                    style={{
-                      padding: '8px 16px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      background: 'white',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
+                    className="px-4 py-2 border border-border rounded-lg bg-card text-card-foreground cursor-pointer text-sm font-medium flex items-center gap-2 hover:bg-muted transition-colors shadow-sm"
                   >
-                    🔄 Refresh Data
+                    <RefreshCw className="w-4 h-4" />
+                    Refresh
                   </button>
                   {canExport && (
                     <>
@@ -318,19 +297,9 @@ export const EmployeesWorkingPage = () => {
                             toast.error('Failed to download PDF', { id: 'emp-pdf' });
                           }
                         }}
-                        style={{
-                          padding: '8px 16px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '6px',
-                          background: 'white',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
+                        className="px-4 py-2 border border-border rounded-lg bg-card text-card-foreground cursor-pointer text-sm font-medium flex items-center gap-2 hover:bg-muted transition-colors shadow-sm"
                       >
-                        <FileText style={{ width: '16px', height: '16px' }} />
+                        <FileText className="w-4 h-4" />
                         PDF
                       </button>
                       <button
@@ -343,19 +312,9 @@ export const EmployeesWorkingPage = () => {
                             toast.error('Failed to download CSV', { id: 'emp-csv' });
                           }
                         }}
-                        style={{
-                          padding: '8px 16px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '6px',
-                          background: 'white',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
+                        className="px-4 py-2 border border-border rounded-lg bg-card text-card-foreground cursor-pointer text-sm font-medium flex items-center gap-2 hover:bg-muted transition-colors shadow-sm"
                       >
-                        <Download style={{ width: '16px', height: '16px' }} />
+                        <Download className="w-4 h-4" />
                         CSV
                       </button>
                     </>
@@ -363,32 +322,14 @@ export const EmployeesWorkingPage = () => {
                   {canAdd && (
                     <button
                       onClick={handleAddClick}
-                      style={{
-                        padding: '8px 16px',
-                        border: 'none',
-                        borderRadius: '6px',
-                        background: '#4f46e5',
-                        color: 'white',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontWeight: '500'
-                      }}
+                      className="px-4 py-2 border-none rounded-lg bg-primary text-primary-foreground cursor-pointer text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-md active:scale-95"
                     >
-                      <Plus style={{ width: '16px', height: '16px' }} />
+                      <Plus className="w-4 h-4" />
                       Add Employee
                     </button>
                   )}
                   {!canAdd && !canExport && (
-                    <div style={{
-                      padding: '8px 16px',
-                      background: '#f3f4f6',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      color: '#666'
-                    }}>
+                    <div className="px-4 py-2 bg-muted rounded-lg text-sm text-muted-foreground font-medium">
                       View Only Mode
                     </div>
                   )}
@@ -396,202 +337,157 @@ export const EmployeesWorkingPage = () => {
               </div>
 
               {/* Search */}
-              <div style={{ position: 'relative', maxWidth: '400px' }}>
-                <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#999' }} />
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search by name, email, or ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px 8px 40px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-muted/30 border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground"
                 />
               </div>
             </div>
 
             {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div className="stat-card animate-slideUp stagger-1" style={{ padding: '24px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <Users style={{ width: '24px', height: '24px' }} />
-                  <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Total Employees</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+              <div className="p-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02] transition-transform">
+                <div className="flex items-center gap-3 mb-3">
+                  <Users className="w-6 h-6 opacity-90" />
+                  <p className="text-sm font-medium opacity-90 m-0">Total Employees</p>
                 </div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>{employees.length}</p>
-                <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>All employees</p>
+                <p className="text-4xl font-bold m-0">{employees.length}</p>
+                <p className="text-xs opacity-75 mt-2">Organization workforce</p>
               </div>
-              <div className="stat-card animate-slideUp stagger-2" style={{ padding: '24px', background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(67, 233, 123, 0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <CheckCircle style={{ width: '24px', height: '24px' }} />
-                  <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>Active</p>
+
+              <div className="p-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl text-white shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-transform">
+                <div className="flex items-center gap-3 mb-3">
+                  <CheckCircle className="w-6 h-6 opacity-90" />
+                  <p className="text-sm font-medium opacity-90 m-0">Active</p>
                 </div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>
+                <p className="text-4xl font-bold m-0">
                   {employees.filter(e => e?.status === 'active').length}
                 </p>
-                <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Working now</p>
+                <p className="text-xs opacity-75 mt-2">Currently working</p>
               </div>
-              <div className="stat-card animate-slideUp stagger-3" style={{ padding: '24px', background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(250, 112, 154, 0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <Clock style={{ width: '24px', height: '24px' }} />
-                  <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>On Probation</p>
+
+              <div className="p-6 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl text-white shadow-lg shadow-amber-500/20 hover:scale-[1.02] transition-transform">
+                <div className="flex items-center gap-3 mb-3">
+                  <Clock className="w-6 h-6 opacity-90" />
+                  <p className="text-sm font-medium opacity-90 m-0">On Probation</p>
                 </div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>
+                <p className="text-4xl font-bold m-0">
                   {employees.filter(e => e?.status === 'probation').length}
                 </p>
-                <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Trial period</p>
+                <p className="text-xs opacity-75 mt-2">Trial period</p>
               </div>
-              <div className="stat-card animate-slideUp stagger-4" style={{ padding: '24px', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: '12px', color: 'white', boxShadow: '0 4px 12px rgba(79, 172, 254, 0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <User style={{ width: '24px', height: '24px' }} />
-                  <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>On Leave</p>
+
+              <div className="p-6 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl text-white shadow-lg shadow-blue-500/20 hover:scale-[1.02] transition-transform">
+                <div className="flex items-center gap-3 mb-3">
+                  <User className="w-6 h-6 opacity-90" />
+                  <p className="text-sm font-medium opacity-90 m-0">On Leave</p>
                 </div>
-                <p style={{ fontSize: '36px', fontWeight: 'bold', margin: 0 }}>
+                <p className="text-4xl font-bold m-0">
                   {employees.filter(e => e?.status === 'onleave').length}
                 </p>
-                <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px' }}>Currently away</p>
+                <p className="text-xs opacity-75 mt-2">Away from office</p>
               </div>
             </div>
 
             {/* Table */}
-            <div key={`employees-table-${updateKey}`} className="animate-slideUp" style={{ background: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f9fafb' }}>
-                  <tr>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Employee</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Department</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Designation</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Location</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Status</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Salary</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', borderBottom: '1px solid #e5e7eb', fontWeight: '600', fontSize: '14px' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEmployees.map((employee) => {
-                    // Extra safety check
-                    if (!employee || !employee._id || !employee.name) {
-                      console.warn('Skipping invalid employee:', employee);
-                      return null;
-                    }
-                    
-                    return (
-                    <tr key={employee._id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <td style={{ padding: '12px 16px' }}>
-                        <div>
-                          <p style={{ fontWeight: '500', margin: 0, marginBottom: '4px' }}>{employee.name}</p>
-                          <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{employee.employeeId || 'N/A'}</p>
-                        </div>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>{employee.department || 'N/A'}</td>
-                      <td style={{ padding: '12px 16px' }}>{employee.designation || 'N/A'}</td>
-                      <td style={{ padding: '12px 16px' }}>{employee.location || 'N/A'}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          padding: '4px 12px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          background: employee.status === 'active' ? '#dcfce7' : employee.status === 'probation' ? '#fef3c7' : employee.status === 'onleave' ? '#dbeafe' : '#fee2e2',
-                          color: employee.status === 'active' ? '#166534' : employee.status === 'probation' ? '#92400e' : employee.status === 'onleave' ? '#1e40af' : '#991b1b'
-                        }}>
-                          {employee.status || 'active'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '500' }}>
-                        ₹{(employee.salary || 0).toLocaleString('en-IN')}
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          {canEdit && (
-                            <button
-                              onClick={() => handleEditClick(employee)}
-                              style={{
-                                padding: '6px 12px',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '4px',
-                                background: 'white',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center'
-                              }}
-                              title="Edit"
-                            >
-                              <Edit style={{ width: '16px', height: '16px' }} />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => {
-                              // Copy email to clipboard
-                              navigator.clipboard.writeText(employee.email).then(() => {
-                                toast.success(`Email copied: ${employee.email}`);
-                              }).catch(() => {
-                                // Fallback: show email in alert
-                                alert(`Employee Email: ${employee.email}\n\nClick OK to copy manually.`);
-                              });
-                            }}
-                            style={{
-                              padding: '6px 12px',
-                              border: '1px solid #d1d5db',
-                              borderRadius: '4px',
-                              background: 'white',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                            title="Copy Email"
-                          >
-                            <Mail style={{ width: '16px', height: '16px' }} />
-                          </button>
-                          {canDelete && (
-                            <button
-                              onClick={() => {
-                                if (!employee || !employee._id || !employee.name) {
-                                  console.error('Cannot delete: Invalid employee data', employee);
-                                  toast.error('Cannot delete: Invalid employee data');
-                                  return;
-                                }
-                                handleDelete(employee._id, employee.name);
-                              }}
-                              style={{
-                                padding: '6px 12px',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '4px',
-                                background: 'white',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                color: '#dc2626'
-                              }}
-                              title="Delete"
-                            >
-                              <Trash2 style={{ width: '16px', height: '16px' }} />
-                            </button>
-                          )}
-                          {!canEdit && !canDelete && (
-                            <span style={{
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              color: '#666',
-                              fontStyle: 'italic'
-                            }}>
-                              View Only
-                            </span>
-                          )}
-                        </div>
-                      </td>
+            <div key={`employees-table-${updateKey}`} className="bg-card text-card-foreground rounded-xl border border-border overflow-hidden shadow-md">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-muted/50 border-b border-border">
+                      <th className="px-6 py-4 text-left font-semibold text-sm">Employee</th>
+                      <th className="px-6 py-4 text-left font-semibold text-sm">Department</th>
+                      <th className="px-6 py-4 text-left font-semibold text-sm">Designation</th>
+                      <th className="px-6 py-4 text-left font-semibold text-sm">Location</th>
+                      <th className="px-6 py-4 text-left font-semibold text-sm">Status</th>
+                      <th className="px-6 py-4 text-right font-semibold text-sm">Salary</th>
+                      <th className="px-6 py-4 text-right font-semibold text-sm">Actions</th>
                     </tr>
-                    );
-                  }).filter(Boolean)}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredEmployees.map((employee) => {
+                      if (!employee || !employee._id || !employee.name?.toString().trim()) {
+                        return null;
+                      }
+
+                      const statusStyles = {
+                        active: "bg-emerald-500/10 text-emerald-500",
+                        probation: "bg-amber-500/10 text-amber-500",
+                        onleave: "bg-blue-500/10 text-blue-500",
+                        inactive: "bg-rose-500/10 text-rose-500"
+                      };
+
+                      return (
+                        <tr key={employee._id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground">{employee.name || 'Unknown Name'}</span>
+                              <span className="text-xs text-muted-foreground mt-0.5">{employee.employeeId || 'N/A'}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium">{employee.department || 'Not Assigned'}</td>
+                          <td className="px-6 py-4 text-sm text-muted-foreground font-medium">{employee.designation || 'Staff'}</td>
+                          <td className="px-6 py-4 text-sm text-muted-foreground">{employee.location || 'Remote'}</td>
+                          <td className="px-6 py-4">
+                            <span className={cn(
+                              "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
+                              statusStyles[employee.status] || statusStyles.active
+                            )}>
+                              {employee.status || 'active'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right font-bold text-sm text-foreground">
+                            ₹{(employee.salary || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2 justify-end">
+                              {canEdit && (
+                                <button
+                                  onClick={() => handleEditClick(employee)}
+                                  className="p-2 bg-card text-card-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+                                  title="Edit"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(employee.email).then(() => {
+                                    toast.success(`Email copied: ${employee.email}`);
+                                  });
+                                }}
+                                className="p-2 bg-card text-card-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+                                title="Copy Email"
+                              >
+                                <Mail className="w-4 h-4" />
+                              </button>
+                              {canDelete && (
+                                <button
+                                  onClick={() => handleDelete(employee._id, employee.name)}
+                                  className="p-2 bg-card text-destructive border border-border rounded-lg hover:bg-destructive/10 transition-colors"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
 
               {filteredEmployees.length === 0 && (
-                <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-                  <p style={{ color: '#666', fontSize: '16px', margin: 0 }}>
+                <div className="py-20 text-center">
+                  <Users className="w-12 h-12 text-muted mx-auto mb-4 opacity-20" />
+                  <p className="text-muted-foreground">
                     {searchQuery ? 'No employees found matching your search.' : 'No employees in the database.'}
                   </p>
                 </div>
@@ -600,54 +496,49 @@ export const EmployeesWorkingPage = () => {
 
             {/* Form Modal */}
             {showForm && (
-              <div className="modal-backdrop" style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0,0,0,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 99999,
-                padding: '20px'
-              }}>
-                <div className="modal-content animate-zoomIn" style={{
-                  background: 'white',
-                  borderRadius: '12px',
-                  maxWidth: '600px',
-                  width: '100%',
-                  maxHeight: '90vh',
-                  overflow: 'auto',
-                  padding: '30px',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-                }}>
-                  <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>
-                    {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
-                  </h2>
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                <div className="bg-card text-card-foreground rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                  <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-6 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl shadow-inner text-white">
+                        {editingEmployee ? <Edit className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+                      </div>
+                      <div>
+                        <h3 className="m-0 text-white text-xl font-bold">
+                          {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
+                        </h3>
+                        <p className="m-0 text-white/80 text-xs mt-0.5">Fill in the details below</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowForm(false)}
+                      className="text-white/60 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-lg transition-colors border-none cursor-pointer"
+                    >
+                      <Plus className="w-5 h-5 rotate-45" />
+                    </button>
+                  </div>
 
-                  <form onSubmit={handleSubmit}>
-                    <div style={{ display: 'grid', gap: '16px' }}>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Employee ID *</label>
-                        <input type="text" value={formData.employeeId} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} required style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} />
+                  <form onSubmit={handleSubmit} className="p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground/80">Employee ID *</label>
+                        <input type="text" value={formData.employeeId} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} required className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground" placeholder="EMP001" />
                       </div>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Full Name *</label>
-                        <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} />
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground/80">Full Name *</label>
+                        <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground" placeholder="John Doe" />
                       </div>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Email *</label>
-                        <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} />
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground/80">Email *</label>
+                        <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground" placeholder="john@example.com" />
                       </div>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Phone</label>
-                        <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} />
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground/80">Phone</label>
+                        <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground" placeholder="+91 9876543210" />
                       </div>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Department *</label>
-                        <select value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground/80">Department *</label>
+                        <select value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground cursor-pointer appearance-none">
                           <option value="Engineering">Engineering</option>
                           <option value="Human Resources">Human Resources</option>
                           <option value="Design">Design</option>
@@ -656,35 +547,56 @@ export const EmployeesWorkingPage = () => {
                           <option value="Finance">Finance</option>
                         </select>
                       </div>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Designation *</label>
-                        <input type="text" value={formData.designation} onChange={(e) => setFormData({ ...formData, designation: e.target.value })} required style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} />
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground/80">Designation *</label>
+                        <input type="text" value={formData.designation} onChange={(e) => setFormData({ ...formData, designation: e.target.value })} required className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground" placeholder="Software Engineer" />
                       </div>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Monthly Salary (₹) *</label>
-                        <input type="number" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: e.target.value })} required style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} />
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground/80">Monthly Salary (₹) *</label>
+                        <input type="number" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: e.target.value })} required className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground" placeholder="50000" />
                       </div>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Location</label>
-                        <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }} />
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground/80">Location</label>
+                        <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground" placeholder="New York" />
                       </div>
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Status *</label>
-                        <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })} required style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}>
-                          <option value="active">Active</option>
-                          <option value="probation">Probation</option>
-                          <option value="onleave">On Leave</option>
-                          <option value="inactive">Inactive</option>
-                        </select>
+                      <div className="space-y-2 col-span-full">
+                        <label className="text-sm font-semibold text-foreground/80">Status *</label>
+                        <div className="flex flex-wrap gap-3">
+                          {['active', 'probation', 'onleave', 'inactive'].map((status) => (
+                            <label key={status} className={cn(
+                              "flex-1 min-w-[120px] px-4 py-2.5 rounded-xl border border-border cursor-pointer flex items-center justify-center gap-2 transition-all",
+                              formData.status === status
+                                ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+                                : "bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                            )}>
+                              <input
+                                type="radio"
+                                name="status"
+                                value={status}
+                                checked={formData.status === status}
+                                onChange={() => setFormData({ ...formData, status: status as any })}
+                                className="hidden"
+                              />
+                              <span className="capitalize text-sm font-medium">{status}</span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '24px', justifyContent: 'flex-end' }}>
-                      <button type="button" onClick={() => setShowForm(false)} style={{ padding: '10px 20px', border: '1px solid #d1d5db', borderRadius: '6px', background: 'white', cursor: 'pointer', fontSize: '14px' }}>
+                    <div className="flex gap-4 mt-10 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowForm(false)}
+                        className="px-6 py-2.5 border border-border rounded-xl bg-card text-card-foreground cursor-pointer text-sm font-bold hover:bg-muted transition-colors shadow-sm"
+                      >
                         Cancel
                       </button>
-                      <button type="submit" style={{ padding: '10px 20px', border: 'none', borderRadius: '6px', background: '#4f46e5', color: 'white', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
-                        {editingEmployee ? 'Update Employee' : 'Add Employee'}
+                      <button
+                        type="submit"
+                        className="px-8 py-2.5 border-none rounded-xl bg-primary text-primary-foreground cursor-pointer text-sm font-bold shadow-lg shadow-primary/30 hover:shadow-primary/40 active:scale-95 transition-all"
+                      >
+                        {editingEmployee ? 'Update Employee' : 'Create Employee'}
                       </button>
                     </div>
                   </form>
@@ -697,78 +609,34 @@ export const EmployeesWorkingPage = () => {
 
       {/* Advanced Delete Confirmation Modal */}
       {deleteModal.show && (
-        <div className="modal-backdrop" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999
-        }}>
-          <div className="modal-content animate-zoomIn" style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            minWidth: '400px',
-            maxWidth: '480px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-          }}>
-            {/* Header */}
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ 
-                margin: 0, 
-                fontSize: '20px', 
-                fontWeight: '600',
-                color: '#111827',
-                marginBottom: '8px'
-              }}>
-                Delete Employee
-              </h3>
-              <p style={{ 
-                margin: 0, 
-                fontSize: '14px',
-                color: '#6b7280',
-                lineHeight: '1.5'
-              }}>
-                Are you sure you want to delete <strong>{deleteModal.employee?.name}</strong>? This action cannot be undone.
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-card text-card-foreground rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-gradient-to-br from-rose-500 to-rose-700 p-6 flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl shadow-inner text-white">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="m-0 text-white text-xl font-bold">Delete Employee</h3>
+                <p className="m-0 text-white/80 text-xs mt-0.5">Confirmation required</p>
+              </div>
+            </div>
+            <div className="p-8">
+              <p className="text-base leading-relaxed text-foreground/90">
+                Are you sure you want to delete <strong>{deleteModal.employee?.name}</strong>? This action cannot be undone and all associated records will be permanently removed.
               </p>
             </div>
-
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className="p-5 bg-muted/30 flex justify-end gap-3 border-t border-border">
               <button
                 onClick={() => setDeleteModal({ show: false, employee: null })}
-                style={{
-                  padding: '10px 20px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  background: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}
+                className="px-6 py-2.5 border border-border rounded-xl bg-card text-card-foreground cursor-pointer text-sm font-bold hover:bg-muted transition-colors shadow-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                style={{
-                  padding: '10px 20px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  background: '#dc2626',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
+                className="px-8 py-2.5 bg-gradient-to-br from-rose-500 to-rose-700 text-white border-none rounded-xl cursor-pointer text-sm font-bold shadow-lg shadow-rose-500/30 hover:shadow-rose-500/40 active:scale-95 transition-all"
               >
-                Delete
+                Delete Employee
               </button>
             </div>
           </div>

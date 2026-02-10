@@ -12,6 +12,17 @@ import AuditLog from './models/AuditLog.js';
 
 dotenv.config();
 
+// Add global error listeners
+process.on('uncaughtException', (err) => {
+  console.error('CRITICAL: Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 const app = express();
 const PORT = 3001;
 
@@ -47,10 +58,13 @@ const generateToken = (id) => {
 const protect = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'Not authorized' });
-  
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret-key');
     req.user = await User.findById(decoded.id).select('-password');
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized - user not found' });
+    }
     next();
   } catch (error) {
     res.status(401).json({ message: 'Not authorized' });
@@ -64,20 +78,20 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // For demo, all passwords are "admin123"
-    const isMatch = password === 'admin123';
-    
+    // Use the comparePassword method from the User model
+    const isMatch = await user.comparePassword(password);
+
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const token = generateToken(user._id);
-    
+
     res.json({
       _id: user._id,
       name: user.name,
@@ -128,14 +142,14 @@ app.post('/api/employees', protect, async (req, res) => {
     if (existingEmail) {
       return res.status(400).json({ message: `Email ${req.body.email} is already registered` });
     }
-    
+
     // Auto-generate employeeId if not provided or if it already exists
     let employeeId = req.body.employeeId;
-    
+
     if (!employeeId || await Employee.findOne({ employeeId })) {
       // Find the highest existing employee ID
       const lastEmployee = await Employee.findOne().sort({ employeeId: -1 });
-      
+
       if (lastEmployee && lastEmployee.employeeId) {
         // Extract number from EMP001, EMP002, etc.
         const match = lastEmployee.employeeId.match(/EMP(\d+)/);
@@ -148,15 +162,15 @@ app.post('/api/employees', protect, async (req, res) => {
       } else {
         employeeId = 'EMP001';
       }
-      
+
       console.log(`🔄 Auto-generated employeeId: ${employeeId}`);
     }
-    
+
     const employee = await Employee.create({
       ...req.body,
       employeeId
     });
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -171,17 +185,17 @@ app.post('/api/employees', protect, async (req, res) => {
       console.error('Failed to create audit log:', auditError);
       // Don't fail the create if audit log fails
     }
-    
+
     res.status(201).json(employee);
   } catch (error) {
     console.error('❌ Error creating employee:', error);
-    
+
     // Handle duplicate key errors
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
       return res.status(400).json({ message: `${field} already exists` });
     }
-    
+
     res.status(400).json({ message: error.message });
   }
 });
@@ -194,11 +208,11 @@ app.put('/api/employees/:id', protect, async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     );
-    
+
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -213,7 +227,7 @@ app.put('/api/employees/:id', protect, async (req, res) => {
       console.error('Failed to create audit log:', auditError);
       // Don't fail the update if audit log fails
     }
-    
+
     res.json(employee);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -224,24 +238,24 @@ app.put('/api/employees/:id', protect, async (req, res) => {
 app.delete('/api/employees/:id', protect, async (req, res) => {
   try {
     const employee = await Employee.findById(req.params.id);
-    
+
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
-    
+
     // Store employee name before deletion
     const employeeName = employee.name;
     const employeeId = employee.employeeId;
-    
+
     // Delete related payroll records
     await Payroll.deleteMany({ employee: req.params.id });
-    
+
     // Delete related loan records
     await Loan.deleteMany({ employee: req.params.id });
-    
+
     // Delete the employee
     await Employee.findByIdAndDelete(req.params.id);
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -256,7 +270,7 @@ app.delete('/api/employees/:id', protect, async (req, res) => {
       console.error('Failed to create audit log:', auditError);
       // Don't fail the delete if audit log fails
     }
-    
+
     res.json({ message: 'Employee and related records deleted successfully' });
   } catch (error) {
     console.error('❌ Error deleting employee:', error);
@@ -270,7 +284,7 @@ app.delete('/api/employees/:id', protect, async (req, res) => {
 app.get('/api/payroll', protect, async (req, res) => {
   try {
     const payrolls = await Payroll.find().sort({ year: -1, month: -1 });
-    
+
     // Manually populate employee data by looking up employeeId
     const populatedPayrolls = await Promise.all(
       payrolls.map(async (payroll) => {
@@ -286,7 +300,7 @@ app.get('/api/payroll', protect, async (req, res) => {
         };
       })
     );
-    
+
     console.log(`✅ Returning ${populatedPayrolls.length} payrolls`);
     res.json(populatedPayrolls);
   } catch (error) {
@@ -299,7 +313,7 @@ app.get('/api/payroll', protect, async (req, res) => {
 app.get('/api/payroll/my-payslips', protect, async (req, res) => {
   try {
     const payrolls = await Payroll.find({ employee: req.user.employeeId }).sort({ year: -1, month: -1 });
-    
+
     // Manually populate employee data
     const populatedPayrolls = await Promise.all(
       payrolls.map(async (payroll) => {
@@ -315,7 +329,7 @@ app.get('/api/payroll/my-payslips', protect, async (req, res) => {
         };
       })
     );
-    
+
     res.json(populatedPayrolls);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -326,7 +340,7 @@ app.get('/api/payroll/my-payslips', protect, async (req, res) => {
 app.post('/api/payroll', protect, async (req, res) => {
   try {
     const payroll = await Payroll.create(req.body);
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -340,7 +354,7 @@ app.post('/api/payroll', protect, async (req, res) => {
     } catch (auditError) {
       console.error('Failed to create audit log:', auditError);
     }
-    
+
     res.status(201).json(payroll);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -355,11 +369,11 @@ app.put('/api/payroll/:id', protect, async (req, res) => {
       req.body,
       { new: true, runValidators: false } // Disable validators for partial updates
     );
-    
+
     if (!payroll) {
       return res.status(404).json({ message: 'Payroll not found' });
     }
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -374,7 +388,7 @@ app.put('/api/payroll/:id', protect, async (req, res) => {
       console.error('Failed to create audit log:', auditError);
       // Don't fail the update if audit log fails
     }
-    
+
     res.json(payroll);
   } catch (error) {
     console.error('Payroll update error:', error);
@@ -386,11 +400,11 @@ app.put('/api/payroll/:id', protect, async (req, res) => {
 app.delete('/api/payroll/:id', protect, async (req, res) => {
   try {
     const payroll = await Payroll.findByIdAndDelete(req.params.id);
-    
+
     if (!payroll) {
       return res.status(404).json({ message: 'Payroll not found' });
     }
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -404,7 +418,7 @@ app.delete('/api/payroll/:id', protect, async (req, res) => {
     } catch (auditError) {
       console.error('Failed to create audit log:', auditError);
     }
-    
+
     res.json({ message: 'Payroll deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -437,7 +451,7 @@ app.get('/api/loans/my-loans', protect, async (req, res) => {
 app.post('/api/loans', protect, async (req, res) => {
   try {
     const loan = await Loan.create(req.body);
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -451,7 +465,7 @@ app.post('/api/loans', protect, async (req, res) => {
     } catch (auditError) {
       console.error('Failed to create audit log:', auditError);
     }
-    
+
     res.status(201).json(loan);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -466,11 +480,11 @@ app.put('/api/loans/:id', protect, async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     );
-    
+
     if (!loan) {
       return res.status(404).json({ message: 'Loan not found' });
     }
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -484,7 +498,7 @@ app.put('/api/loans/:id', protect, async (req, res) => {
     } catch (auditError) {
       console.error('Failed to create audit log:', auditError);
     }
-    
+
     res.json(loan);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -499,36 +513,36 @@ app.put('/api/loans/:id/approve', protect, async (req, res) => {
       body: req.body,
       user: req.user?._id
     });
-    
+
     const { status, remarks } = req.body;
-    
+
     // Build update data - make approvedBy optional if user is null
     const updateData = {
       status,
       remarks,
       approvedDate: new Date()
     };
-    
+
     // Only add approvedBy if user exists
     if (req.user && req.user._id) {
       updateData.approvedBy = req.user._id.toString();
     }
-    
+
     console.log('💾 Updating loan with data:', updateData);
-    
+
     const loan = await Loan.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true, runValidators: true }
     );
-    
+
     if (!loan) {
       console.error('❌ Loan not found:', req.params.id);
       return res.status(404).json({ message: 'Loan not found' });
     }
-    
+
     console.log('✅ Loan updated successfully:', loan._id, 'status:', loan.status);
-    
+
     // Create audit log only if user exists
     if (req.user && req.user._id) {
       await AuditLog.create({
@@ -540,7 +554,7 @@ app.put('/api/loans/:id/approve', protect, async (req, res) => {
         module: 'Loans'
       });
     }
-    
+
     res.json(loan);
   } catch (error) {
     console.error('❌ Loan approve error:', error.message, error.stack);
@@ -552,11 +566,11 @@ app.put('/api/loans/:id/approve', protect, async (req, res) => {
 app.delete('/api/loans/:id', protect, async (req, res) => {
   try {
     const loan = await Loan.findByIdAndDelete(req.params.id);
-    
+
     if (!loan) {
       return res.status(404).json({ message: 'Loan not found' });
     }
-    
+
     // Create audit log (with safety checks)
     try {
       await AuditLog.create({
@@ -570,7 +584,7 @@ app.delete('/api/loans/:id', protect, async (req, res) => {
     } catch (auditError) {
       console.error('Failed to create audit log:', auditError);
     }
-    
+
     res.json({ message: 'Loan deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -582,6 +596,10 @@ app.delete('/api/loans/:id', protect, async (req, res) => {
 // Get all audit logs
 app.get('/api/audit-logs', protect, async (req, res) => {
   try {
+    // Role check: Only superadmin and admin can see audit logs
+    if (!['superadmin', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Forbidden: Access denied' });
+    }
     const logs = await AuditLog.find().sort({ createdAt: -1 }).limit(100);
     res.json(logs);
   } catch (error) {
@@ -597,7 +615,7 @@ app.get('/api/dashboard/stats', protect, async (req, res) => {
     const activeEmployees = await Employee.countDocuments({ status: 'active' });
     const totalPayroll = await Payroll.countDocuments();
     const activeLoans = await Loan.countDocuments({ status: 'active' });
-    
+
     res.json({
       totalEmployees,
       activeEmployees,
@@ -611,7 +629,7 @@ app.get('/api/dashboard/stats', protect, async (req, res) => {
 
 // Root route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'PayZenix Payroll API - MongoDB Version',
     version: '2.0.0',
     database: 'MongoDB',
@@ -621,7 +639,7 @@ app.get('/', (req, res) => {
 
 // 404 handler - return JSON instead of HTML
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     message: `Route ${req.method} ${req.url} not found`,
     availableRoutes: [
       'POST /api/auth/login',
@@ -650,7 +668,7 @@ app.use((req, res) => {
 // Error handler - return JSON instead of HTML
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  res.status(err.status || 500).json({ 
+  res.status(err.status || 500).json({
     message: err.message || 'Internal server error',
     error: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });

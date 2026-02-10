@@ -1,23 +1,113 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import User from './models/User.js';
 import Employee from './models/Employee.js';
 import Payroll from './models/Payroll.js';
 import Loan from './models/Loan.js';
 import AuditLog from './models/AuditLog.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 dotenv.config();
 
-const DB_FILE = path.join(__dirname, 'db.json');
-
-// Read JSON database
-const jsonData = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+const jsonData = {
+  "users": [
+    {
+      "name": "Super Admin",
+      "email": "superadmin@payzenix.com",
+      "password": "adminpassword123",
+      "role": "superadmin",
+      "status": "active"
+    },
+    {
+      "name": "Admin User",
+      "email": "admin@payzenix.com",
+      "password": "adminpassword123",
+      "role": "admin",
+      "status": "active"
+    },
+    {
+      "name": "Priya Sharma",
+      "email": "hr@payzenix.com",
+      "password": "hrpassword123",
+      "role": "hr",
+      "employeeId": "EMP002",
+      "status": "active"
+    },
+    {
+      "name": "Amit Patel",
+      "email": "employee@payzenix.com",
+      "password": "employeepassword123",
+      "role": "employee",
+      "employeeId": "EMP003",
+      "status": "active"
+    }
+  ],
+  "employees": [
+    {
+      "employeeId": "EMP001",
+      "name": "Super Admin",
+      "email": "superadmin@payzenix.com",
+      "department": "Management",
+      "designation": "System Administrator",
+      "salary": 150000,
+      "status": "active"
+    },
+    {
+      "employeeId": "EMP002",
+      "name": "Priya Sharma",
+      "email": "hr@payzenix.com",
+      "department": "Human Resources",
+      "designation": "HR Manager",
+      "salary": 75000,
+      "status": "active"
+    },
+    {
+      "employeeId": "EMP003",
+      "name": "Amit Patel",
+      "email": "amit@payzenix.com",
+      "department": "Engineering",
+      "designation": "Software Engineer",
+      "salary": 85000,
+      "status": "active"
+    }
+  ],
+  "payrolls": [
+    {
+      "employee": "EMP002",
+      "month": 2,
+      "year": 2026,
+      "basicSalary": 50000,
+      "allowances": {
+        "hra": 20000
+      },
+      "grossSalary": 70000,
+      "netSalary": 65000,
+      "status": "paid"
+    }
+  ],
+  "loans": [
+    {
+      "employee": "EMP003",
+      "loanType": "personal",
+      "amount": 5000,
+      "tenure": 12,
+      "emiAmount": 500,
+      "startDate": "2026-02-01T00:00:00.000Z",
+      "status": "active",
+      "remainingAmount": 4500
+    }
+  ],
+  "auditLogs": [
+    {
+      "action": "Database Seeded",
+      "user": "System",
+      "userId": "system",
+      "details": "Initial data seed",
+      "timestamp": "2026-02-09T22:00:00.000Z",
+      "type": "create",
+      "module": "Authentication"
+    }
+  ]
+};
 
 const seedDatabase = async () => {
   try {
@@ -36,42 +126,42 @@ const seedDatabase = async () => {
 
     // Seed Users
     console.log('\n👥 Seeding users...');
-    let users, employees, payrolls, loans, auditLogs;
-    
-    try {
-      users = await User.insertMany(jsonData.users.map(user => ({
-        ...user,
-        _id: undefined // Let MongoDB generate new IDs
-      })));
-      console.log(`✅ ${users.length} users created!`);
-    } catch (err) {
-      console.error('❌ Error seeding users:', err.message);
-      throw err;
+    let users = [];
+    for (const userData of jsonData.users) {
+      const user = await User.create({
+        ...userData,
+        _id: undefined
+      });
+      users.push(user);
     }
+    console.log(`✅ ${users.length} users created!`);
 
     // Seed Employees
     console.log('\n👨‍💼 Seeding employees...');
     try {
-      employees = await Employee.insertMany(jsonData.employees.map(emp => ({
+      const employees = await Employee.insertMany(jsonData.employees.map(emp => ({
         ...emp,
         _id: undefined
       })));
       console.log(`✅ ${employees.length} employees created!`);
-      console.log('Employee IDs:', employees.map(e => e._id));
     } catch (err) {
       console.error('❌ Error seeding employees:', err.message);
+      if (err.errors) {
+        Object.keys(err.errors).forEach(key => {
+          console.error(`   Validation error for ${key}: ${err.errors[key].message}`);
+        });
+      }
       throw err;
     }
 
     // Seed Payrolls
     console.log('\n💰 Seeding payroll records...');
     try {
-      payrolls = await Payroll.insertMany(jsonData.payrolls.map(payroll => ({
+      const payrolls = await Payroll.insertMany(jsonData.payrolls.map(payroll => ({
         ...payroll,
         _id: undefined
       })));
       console.log(`✅ ${payrolls.length} payroll records created!`);
-      console.log('Payroll IDs:', payrolls.map(p => p._id));
     } catch (err) {
       console.error('❌ Error seeding payrolls:', err.message);
       throw err;
@@ -80,7 +170,7 @@ const seedDatabase = async () => {
     // Seed Loans
     console.log('\n🏦 Seeding loans...');
     try {
-      loans = await Loan.insertMany(jsonData.loans.map(loan => ({
+      const loans = await Loan.insertMany(jsonData.loans.map(loan => ({
         ...loan,
         _id: undefined
       })));
@@ -93,7 +183,7 @@ const seedDatabase = async () => {
     // Seed Audit Logs
     console.log('\n📜 Seeding audit logs...');
     try {
-      auditLogs = await AuditLog.insertMany(jsonData.auditLogs.map(log => ({
+      const auditLogs = await AuditLog.insertMany(jsonData.auditLogs.map(log => ({
         action: log.action,
         user: log.user,
         userId: log.userId,
@@ -109,12 +199,6 @@ const seedDatabase = async () => {
     }
 
     console.log('\n🎉 DATABASE SEEDING COMPLETE!');
-    console.log('\n📊 Summary:');
-    console.log(`   Users: ${users.length}`);
-    console.log(`   Employees: ${employees.length}`);
-    console.log(`   Payroll Records: ${payrolls.length}`);
-    console.log(`   Loans: ${loans.length}`);
-    console.log(`   Audit Logs: ${auditLogs.length}`);
     console.log('\n✅ MongoDB is ready to use!');
 
     process.exit(0);

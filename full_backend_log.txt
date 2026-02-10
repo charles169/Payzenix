@@ -1,0 +1,24 @@
+﻿
+> payzenix-server@1.0.0 dev
+> nodemon index-mongodb.js
+
+[33m[nodemon] 3.1.11[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node index-mongodb.js`[39m
+≡ƒöä Connecting to MongoDB...
+≡ƒÜÇ Server running on port 3001
+   http://localhost:3001
+Γ£à Using MongoDB database
+Γ£à MongoDB Connected: localhost
+   Database: payzenix
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting child process[39m
+[32m[nodemon] starting `node index-mongodb.js`[39m
+≡ƒöä Connecting to MongoDB...
+≡ƒÜÇ Server running on port 3001
+   http://localhost:3001
+Γ£à Using MongoDB database
+Γ£à MongoDB Connected: localhost
+   Database: payzenix

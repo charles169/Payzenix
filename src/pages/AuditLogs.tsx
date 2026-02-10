@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/Header';
 import { Shield, Search, Filter, Download, User, FileText, DollarSign, Settings, Clock } from 'lucide-react';
 import { downloadAuditLogsPDF } from '@/utils/downloadUtils';
 import toast from 'react-hot-toast';
+import { cn } from '@/lib/utils';
 
 export const AuditLogsPage = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -26,11 +27,22 @@ export const AuditLogsPage = () => {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          toast.error('Access Denied: You do not have permission to view audit logs');
+          setAuditLogs([]);
+          return;
+        }
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
       const data = await response.json();
-      setAuditLogs(data);
+      setAuditLogs(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading audit logs:', error);
-      toast.error('Failed to load audit logs');
+      toast.error('Failed to load audit logs. Please check your connection.');
+      setAuditLogs([]);
     } finally {
       setLoading(false);
     }
@@ -41,12 +53,12 @@ export const AuditLogsPage = () => {
     setShowModal(true);
   };
 
-  // Helper function to get icon and color based on action type
-  const getLogIcon = (action: string) => {
-    if (action.includes('Employee') || action.includes('User')) return { icon: User, color: '#10b981' };
-    if (action.includes('Payroll') || action.includes('Loan')) return { icon: DollarSign, color: '#4f46e5' };
-    if (action.includes('Settings')) return { icon: Settings, color: '#8b5cf6' };
-    if (action.includes('Report')) return { icon: FileText, color: '#06b6d4' };
+  const getLogIcon = (action: string = '') => {
+    const actionStr = String(action);
+    if (actionStr.includes('Employee') || actionStr.includes('User')) return { icon: User, color: '#10b981' };
+    if (actionStr.includes('Payroll') || actionStr.includes('Loan')) return { icon: DollarSign, color: '#4f46e5' };
+    if (actionStr.includes('Settings')) return { icon: Settings, color: '#8b5cf6' };
+    if (actionStr.includes('Report')) return { icon: FileText, color: '#06b6d4' };
     return { icon: Clock, color: '#666' };
   };
 
@@ -57,64 +69,54 @@ export const AuditLogsPage = () => {
   );
 
   const getTypeBadge = (type: string) => {
-    const badges: Record<string, { bg: string; color: string; text: string }> = {
-      create: { bg: '#dcfce7', color: '#16a34a', text: 'Create' },
-      update: { bg: '#fef3c7', color: '#d97706', text: 'Update' },
-      delete: { bg: '#fee2e2', color: '#dc2626', text: 'Delete' },
-      process: { bg: '#ede9fe', color: '#7c3aed', text: 'Process' },
-      approval: { bg: '#dcfce7', color: '#16a34a', text: 'Approval' },
-      settings: { bg: '#f3e8ff', color: '#8b5cf6', text: 'Settings' },
-      report: { bg: '#cffafe', color: '#0891b2', text: 'Report' },
+    const badges: Record<string, { className: string; text: string }> = {
+      create: { className: 'bg-emerald-500/10 text-emerald-500', text: 'Create' },
+      update: { className: 'bg-amber-500/10 text-amber-500', text: 'Update' },
+      delete: { className: 'bg-rose-500/10 text-rose-500', text: 'Delete' },
+      process: { className: 'bg-indigo-500/10 text-indigo-500', text: 'Process' },
+      approval: { className: 'bg-emerald-500/10 text-emerald-500', text: 'Approval' },
+      settings: { className: 'bg-purple-500/10 text-purple-500', text: 'Settings' },
+      report: { className: 'bg-cyan-500/10 text-cyan-500', text: 'Report' },
     };
-    return badges[type] || { bg: '#f3f4f6', color: '#6b7280', text: type };
+    return badges[type] || { className: 'bg-slate-500/10 text-slate-500', text: type };
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <div 
+      <div
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
         <Sidebar />
       </div>
-      <div 
-        style={{ 
-          marginLeft: sidebarCollapsed ? '80px' : '280px',
-          transition: 'margin-left 0.3s ease-in-out'
-        }}
+      <div
+        className={cn(
+          "transition-all duration-300",
+          sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+        )}
       >
         <Header />
         <main className="p-6">
-          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <div className="max-w-[1400px] mx-auto">
+            <div className="flex justify-between items-center mb-8">
               <div>
-                <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '5px' }}>Audit Logs</h1>
-                <p style={{ color: '#666', fontSize: '14px' }}>
-                  Track all system activities and changes
-                </p>
+                <h1 className="text-3xl font-bold mb-1.5 text-foreground text-gradient">Audit Logs</h1>
+                <p className="text-muted-foreground text-sm">Track all system activities and changes</p>
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="flex gap-3">
                 <button
                   onClick={() => showPopup('Opening advanced filters...')}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
+                  className="px-5 py-2.5 bg-card text-card-foreground border border-border rounded-lg cursor-pointer text-sm font-medium flex items-center gap-2 hover:bg-muted transition-colors shadow-sm"
                 >
-                  <Filter style={{ width: '16px', height: '16px' }} />
+                  <Filter className="w-4 h-4" />
                   Filter
                 </button>
                 <button
                   onClick={async () => {
+                    if (auditLogs.length === 0) {
+                      toast.error('No logs to export');
+                      return;
+                    }
                     try {
                       toast.loading('Generating Audit Logs PDF...', { id: 'audit-pdf' });
                       await downloadAuditLogsPDF(auditLogs);
@@ -123,168 +125,110 @@ export const AuditLogsPage = () => {
                       toast.error('Failed to download PDF', { id: 'audit-pdf' });
                     }
                   }}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#4f46e5',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
+                  className="px-5 py-2.5 bg-primary text-primary-foreground border-none rounded-lg cursor-pointer text-sm font-medium flex items-center gap-2 hover:bg-primary/90 transition-all shadow-md active:scale-95"
                 >
-                  <Download style={{ width: '16px', height: '16px' }} />
+                  <Download className="w-4 h-4" />
                   Export Logs
                 </button>
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ position: 'relative' }}>
-                <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '20px', height: '20px', color: '#9ca3af' }} />
+            <div className="bg-card text-card-foreground rounded-xl border border-border p-5 mb-5 shadow-sm">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search logs by action, user, or details..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 44px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
+                  className="w-full pl-11 pr-4 py-3 bg-muted/30 border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground"
                 />
               </div>
             </div>
 
-            {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                  <Shield style={{ width: '20px', height: '20px', color: '#4f46e5' }} />
-                  <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Total Logs</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+              <div className="p-5 bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <Shield className="w-5 h-5 text-primary" />
+                  <p className="text-sm text-muted-foreground font-medium m-0">Total Logs</p>
                 </div>
-                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>{auditLogs.length}</p>
+                <p className="text-3xl font-bold m-0 text-foreground">{auditLogs.length}</p>
               </div>
 
-              <div style={{ padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                  <Clock style={{ width: '20px', height: '20px', color: '#10b981' }} />
-                  <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Today</p>
+              <div className="p-5 bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <Clock className="w-5 h-5 text-success" />
+                  <p className="text-sm text-muted-foreground font-medium m-0">Today</p>
                 </div>
-                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>5</p>
+                <p className="text-3xl font-bold m-0 text-foreground">
+                  {auditLogs.filter(log => new Date(log.createdAt || log.timestamp).toDateString() === new Date().toDateString()).length}
+                </p>
               </div>
 
-              <div style={{ padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                  <User style={{ width: '20px', height: '20px', color: '#f59e0b' }} />
-                  <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Active Users</p>
+              <div className="p-5 bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <User className="w-5 h-5 text-warning" />
+                  <p className="text-sm text-muted-foreground font-medium m-0">Active Users</p>
                 </div>
-                <p style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>3</p>
+                <p className="text-3xl font-bold m-0 text-foreground">
+                  {[...new Set(auditLogs.map(log => log.user))].length}
+                </p>
               </div>
             </div>
 
-            {/* Audit Logs Timeline */}
-            <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '24px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px' }}>Activity Timeline</h2>
-              
-              <div style={{ position: 'relative' }}>
-                {/* Timeline Line */}
-                <div style={{
-                  position: 'absolute',
-                  left: '28px',
-                  top: '0',
-                  bottom: '0',
-                  width: '2px',
-                  background: '#e5e7eb'
-                }} />
+            <div className="bg-card text-card-foreground rounded-xl border border-border p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-6">Activity Timeline</h2>
+              <div className="relative">
+                <div className="absolute left-7 top-0 bottom-0 w-px bg-border mt-2" />
 
-                {/* Log Entries */}
-                {filteredLogs.map((log, index) => {
-                  const badge = getTypeBadge(log.type);
-                  return (
-                    <div
-                      key={log.id}
-                      style={{
-                        position: 'relative',
-                        paddingLeft: '60px',
-                        paddingBottom: index === filteredLogs.length - 1 ? '0' : '24px'
-                      }}
-                    >
-                      {/* Icon */}
-                      <div style={{
-                        position: 'absolute',
-                        left: '12px',
-                        top: '0',
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        background: 'white',
-                        border: `2px solid ${log.color}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1
-                      }}>
-                        <log.icon style={{ width: '16px', height: '16px', color: log.color }} />
-                      </div>
-
-                      {/* Content */}
-                      <div style={{
-                        padding: '16px',
-                        background: '#f9fafb',
-                        borderRadius: '8px',
-                        border: '1px solid #e5e7eb'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                          <div>
-                            <h3 style={{ fontSize: '15px', fontWeight: '600', margin: 0, marginBottom: '4px' }}>
-                              {log.action}
-                            </h3>
-                            <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
-                              by <span style={{ fontWeight: '500', color: '#374151' }}>{log.user}</span>
-                            </p>
+                {loading ? (
+                  <div className="py-10 text-center">
+                    <div className="animate-spin w-8 h-8 border-3 border-muted border-t-primary rounded-full mx-auto" />
+                    <p className="text-muted-foreground mt-3 text-sm">Loading audit logs...</p>
+                  </div>
+                ) : (
+                  filteredLogs.map((log, index) => {
+                    const badge = getTypeBadge(log.type);
+                    const logUI = getLogIcon(log.action);
+                    const Icon = logUI.icon;
+                    return (
+                      <div key={log._id || log.id || index} className={cn(
+                        "relative pl-16",
+                        index === filteredLogs.length - 1 ? "pb-0" : "pb-8"
+                      )}>
+                        <div className="absolute left-3 top-0 w-9 h-9 rounded-full bg-card border-2 flex items-center justify-center z-10 shadow-sm transition-transform hover:scale-110" style={{ borderColor: logUI.color }}>
+                          <Icon className="w-4 h-4" style={{ color: logUI.color }} />
+                        </div>
+                        <div className="p-4 bg-muted/20 hover:bg-muted/40 rounded-xl border border-border/50 transition-all hover:shadow-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="text-sm font-semibold mb-1 text-foreground">{log.action}</h3>
+                              <p className="text-xs text-muted-foreground">
+                                by <span className="font-medium text-foreground">{log.user}</span>
+                              </p>
+                            </div>
+                            <span className={cn(
+                              "px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm",
+                              badge.className
+                            )}>
+                              {badge.text}
+                            </span>
                           </div>
-                          <span style={{
-                            padding: '4px 12px',
-                            background: badge.bg,
-                            color: badge.color,
-                            borderRadius: '12px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                          }}>
-                            {badge.text}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: '14px', color: '#374151', margin: 0, marginBottom: '8px' }}>
-                          {log.details}
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <Clock style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
-                          <span style={{ fontSize: '12px', color: '#9ca3af' }}>
-                            {log.timestamp}
-                          </span>
+                          <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{log.details}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 w-fit px-2 py-1 rounded-md">
+                            <Clock className="w-3 h-3" />
+                            <span>{new Date(log.createdAt || log.timestamp).toLocaleString()}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
 
-                {filteredLogs.length === 0 && (
-                  <div style={{ padding: '40px', textAlign: 'center' }}>
-                    <Shield style={{ width: '48px', height: '48px', color: '#d1d5db', margin: '0 auto 12px' }} />
-                    <p style={{ color: '#9ca3af', fontSize: '14px', margin: 0 }}>
-                      No audit logs found matching your search
-                    </p>
+                {filteredLogs.length === 0 && !loading && (
+                  <div className="py-12 text-center">
+                    <Shield className="w-12 h-12 text-muted mx-auto mb-4 opacity-20" />
+                    <p className="text-muted-foreground text-sm">No audit logs found matching your search</p>
                   </div>
                 )}
               </div>
@@ -293,84 +237,23 @@ export const AuditLogsPage = () => {
         </main>
       </div>
 
-      {/* Modal */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          backdropFilter: 'blur(4px)',
-          animation: 'fadeIn 0.2s ease-out'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            minWidth: '450px',
-            maxWidth: '550px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            animation: 'slideUp 0.3s ease-out',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-              padding: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px'
-              }}>
-                🔒
-              </div>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card text-card-foreground rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+            <div className="bg-gradient-to-br from-rose-500 to-rose-700 p-6 flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl shadow-inner">🔒</div>
               <div>
-                <h3 style={{ margin: 0, color: 'white', fontSize: '20px', fontWeight: '600' }}>
-                  PayZenix Audit
-                </h3>
-                <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)', fontSize: '13px', marginTop: '2px' }}>
-                  Security & Audit System
-                </p>
+                <h3 className="m-0 text-white text-xl font-bold">PayZenix Audit</h3>
+                <p className="m-0 text-white/80 text-xs mt-0.5">Security & Audit System</p>
               </div>
             </div>
-            <div style={{ padding: '28px 24px' }}>
-              <p style={{ fontSize: '15px', lineHeight: '1.6', color: '#374151', margin: 0 }}>
-                {modalMessage}
-              </p>
+            <div className="p-8">
+              <p className="text-base leading-relaxed text-foreground/90">{modalMessage}</p>
             </div>
-            <div style={{ 
-              padding: '16px 24px', 
-              background: '#f9fafb',
-              display: 'flex', 
-              justifyContent: 'flex-end',
-              borderTop: '1px solid #e5e7eb'
-            }}>
+            <div className="p-5 bg-muted/30 flex justify-end border-t border-border">
               <button
                 onClick={() => setShowModal(false)}
-                style={{
-                  padding: '10px 28px',
-                  background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)'
-                }}
+                className="px-8 py-2.5 bg-gradient-to-br from-rose-500 to-rose-700 text-white border-none rounded-lg cursor-pointer text-sm font-bold shadow-lg shadow-rose-500/30 hover:shadow-rose-500/40 active:scale-95 transition-all"
               >
                 Got it!
               </button>
@@ -378,17 +261,6 @@ export const AuditLogsPage = () => {
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
     </div>
   );
 };

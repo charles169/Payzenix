@@ -1,0 +1,42 @@
+﻿≡ƒöä Connecting to MongoDB...
+node : Γ¥î MongoDB 
+connection error: 
+The `uri` parameter 
+to `openUri()` must 
+be a string, got 
+"undefined". Make 
+sure the first 
+parameter to 
+`mongoose.connect()` 
+or `mongoose.createCo
+nnection()` is a 
+string.
+At line:1 char:1
++ node server/index-m
+ongodb.js 2>&1 | 
+Out-File -FilePath 
+debug_backend_ ...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (Γ¥î Mon   
+ goDB con...)` is    
+ a string.:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+
+≡ƒÆí Make sure 
+MongoDB is running:
+   - Local: mongod
+   - Docker: docker 
+run -d -p 
+27017:27017 mongo
+
+   Or update 
+MONGO_URI in .env 
+file
