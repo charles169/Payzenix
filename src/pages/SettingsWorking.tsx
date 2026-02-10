@@ -17,26 +17,41 @@ const initialSalaryComponents = [
   { id: 8, name: 'TDS', type: 'deduction', calculation: 'As per slab', taxable: false, active: true },
 ];
 
+// Load settings from localStorage before component renders
+const loadSavedSettings = () => {
+  try {
+    const savedSettings = localStorage.getItem('payzenix_settings');
+    if (savedSettings) {
+      return JSON.parse(savedSettings);
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+  return null;
+};
+
+const savedData = loadSavedSettings();
+
 export const SettingsWorkingPage = () => {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('company');
-  const [companyName, setCompanyName] = useState('PayZenix Technologies Pvt. Ltd.');
-  const [registrationNumber, setRegistrationNumber] = useState('CIN: U72200KA2020PTC123456');
-  const [companyPAN, setCompanyPAN] = useState('ABCDE1234F');
-  const [tanNumber, setTanNumber] = useState('BLRA12345F');
-  const [address, setAddress] = useState('123, Tech Park, Whitefield, Bangalore - 560066');
-  const [pfEnabled, setPfEnabled] = useState(true);
-  const [esiEnabled, setEsiEnabled] = useState(true);
-  const [pfEmployeeRate, setPfEmployeeRate] = useState('12%');
-  const [pfEmployerRate, setPfEmployerRate] = useState('12%');
-  const [pfWageLimit, setPfWageLimit] = useState('₹15,000');
-  const [esiEmployeeRate, setEsiEmployeeRate] = useState('0.75%');
-  const [esiEmployerRate, setEsiEmployerRate] = useState('3.25%');
-  const [esiSalaryLimit, setEsiSalaryLimit] = useState('₹21,000');
-  const [salaryComponents, setSalaryComponents] = useState(initialSalaryComponents);
+  const [companyName, setCompanyName] = useState(savedData?.companyName || 'PayZenix Technologies Pvt. Ltd.');
+  const [registrationNumber, setRegistrationNumber] = useState(savedData?.registrationNumber || 'CIN: U72200KA2020PTC123456');
+  const [companyPAN, setCompanyPAN] = useState(savedData?.companyPAN || 'ABCDE1234F');
+  const [tanNumber, setTanNumber] = useState(savedData?.tanNumber || 'BLRA12345F');
+  const [address, setAddress] = useState(savedData?.address || '123, Tech Park, Whitefield, Bangalore - 560066');
+  const [pfEnabled, setPfEnabled] = useState(savedData?.pfEnabled !== undefined ? savedData.pfEnabled : true);
+  const [esiEnabled, setEsiEnabled] = useState(savedData?.esiEnabled !== undefined ? savedData.esiEnabled : true);
+  const [pfEmployeeRate, setPfEmployeeRate] = useState(savedData?.pfEmployeeRate || '12%');
+  const [pfEmployerRate, setPfEmployerRate] = useState(savedData?.pfEmployerRate || '12%');
+  const [pfWageLimit, setPfWageLimit] = useState(savedData?.pfWageLimit || '₹15,000');
+  const [esiEmployeeRate, setEsiEmployeeRate] = useState(savedData?.esiEmployeeRate || '0.75%');
+  const [esiEmployerRate, setEsiEmployerRate] = useState(savedData?.esiEmployerRate || '3.25%');
+  const [esiSalaryLimit, setEsiSalaryLimit] = useState(savedData?.esiSalaryLimit || '₹21,000');
+  const [salaryComponents, setSalaryComponents] = useState(savedData?.salaryComponents || initialSalaryComponents);
   const [editingComponent, setEditingComponent] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<any>({});
-  const [notifications, setNotifications] = useState({
+  const [notifications, setNotifications] = useState(savedData?.notifications || {
     payrollProcessed: true,
     payslipAvailable: true,
     complianceReminders: true,
@@ -45,36 +60,10 @@ export const SettingsWorkingPage = () => {
   });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
-  // Load settings from localStorage on mount
+  // Log on mount to verify settings loaded
   useEffect(() => {
-    const savedSettings = localStorage.getItem('payzenix_settings');
-    if (savedSettings) {
-      try {
-        const settings = JSON.parse(savedSettings);
-        console.log('📥 Loading saved settings:', settings);
-        
-        if (settings.companyName) setCompanyName(settings.companyName);
-        if (settings.registrationNumber) setRegistrationNumber(settings.registrationNumber);
-        if (settings.companyPAN) setCompanyPAN(settings.companyPAN);
-        if (settings.tanNumber) setTanNumber(settings.tanNumber);
-        if (settings.address) setAddress(settings.address);
-        if (settings.pfEnabled !== undefined) setPfEnabled(settings.pfEnabled);
-        if (settings.esiEnabled !== undefined) setEsiEnabled(settings.esiEnabled);
-        if (settings.pfEmployeeRate) setPfEmployeeRate(settings.pfEmployeeRate);
-        if (settings.pfEmployerRate) setPfEmployerRate(settings.pfEmployerRate);
-        if (settings.pfWageLimit) setPfWageLimit(settings.pfWageLimit);
-        if (settings.esiEmployeeRate) setEsiEmployeeRate(settings.esiEmployeeRate);
-        if (settings.esiEmployerRate) setEsiEmployerRate(settings.esiEmployerRate);
-        if (settings.esiSalaryLimit) setEsiSalaryLimit(settings.esiSalaryLimit);
-        if (settings.salaryComponents && Array.isArray(settings.salaryComponents)) {
-          setSalaryComponents(settings.salaryComponents);
-        }
-        if (settings.notifications) setNotifications(settings.notifications);
-        
-        console.log('✅ Settings loaded successfully');
-      } catch (error) {
-        console.error('❌ Error loading settings:', error);
-      }
+    if (savedData) {
+      console.log('✅ Settings loaded from localStorage on mount:', savedData);
     } else {
       console.log('ℹ️ No saved settings found, using defaults');
     }
