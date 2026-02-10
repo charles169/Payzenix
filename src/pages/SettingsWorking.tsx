@@ -51,6 +51,8 @@ export const SettingsWorkingPage = () => {
     if (savedSettings) {
       try {
         const settings = JSON.parse(savedSettings);
+        console.log('📥 Loading saved settings:', settings);
+        
         if (settings.companyName) setCompanyName(settings.companyName);
         if (settings.registrationNumber) setRegistrationNumber(settings.registrationNumber);
         if (settings.companyPAN) setCompanyPAN(settings.companyPAN);
@@ -64,11 +66,17 @@ export const SettingsWorkingPage = () => {
         if (settings.esiEmployeeRate) setEsiEmployeeRate(settings.esiEmployeeRate);
         if (settings.esiEmployerRate) setEsiEmployerRate(settings.esiEmployerRate);
         if (settings.esiSalaryLimit) setEsiSalaryLimit(settings.esiSalaryLimit);
-        if (settings.salaryComponents) setSalaryComponents(settings.salaryComponents);
+        if (settings.salaryComponents && Array.isArray(settings.salaryComponents)) {
+          setSalaryComponents(settings.salaryComponents);
+        }
         if (settings.notifications) setNotifications(settings.notifications);
+        
+        console.log('✅ Settings loaded successfully');
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error('❌ Error loading settings:', error);
       }
+    } else {
+      console.log('ℹ️ No saved settings found, using defaults');
     }
   }, []);
 
@@ -93,9 +101,11 @@ export const SettingsWorkingPage = () => {
       lastUpdated: new Date().toISOString(),
     };
     
+    console.log('💾 Saving settings to localStorage:', settings);
     localStorage.setItem('payzenix_settings', JSON.stringify(settings));
+    console.log('✅ Settings saved successfully');
     
-    toast.success('Settings saved successfully!', {
+    toast.success('Settings saved successfully! Changes will persist after refresh.', {
       duration: 3000,
       icon: '✅',
     });
