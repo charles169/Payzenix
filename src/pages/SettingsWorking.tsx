@@ -17,55 +17,168 @@ const initialSalaryComponents = [
   { id: 8, name: 'TDS', type: 'deduction', calculation: 'As per slab', taxable: false, active: true },
 ];
 
-// Load settings from localStorage before component renders
-const loadSavedSettings = () => {
-  try {
-    const savedSettings = localStorage.getItem('payzenix_settings');
-    if (savedSettings) {
-      return JSON.parse(savedSettings);
-    }
-  } catch (error) {
-    console.error('Error loading settings:', error);
-  }
-  return null;
-};
-
-const savedData = loadSavedSettings();
-
 export const SettingsWorkingPage = () => {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('company');
-  const [companyName, setCompanyName] = useState(savedData?.companyName || 'PayZenix Technologies Pvt. Ltd.');
-  const [registrationNumber, setRegistrationNumber] = useState(savedData?.registrationNumber || 'CIN: U72200KA2020PTC123456');
-  const [companyPAN, setCompanyPAN] = useState(savedData?.companyPAN || 'ABCDE1234F');
-  const [tanNumber, setTanNumber] = useState(savedData?.tanNumber || 'BLRA12345F');
-  const [address, setAddress] = useState(savedData?.address || '123, Tech Park, Whitefield, Bangalore - 560066');
-  const [pfEnabled, setPfEnabled] = useState(savedData?.pfEnabled !== undefined ? savedData.pfEnabled : true);
-  const [esiEnabled, setEsiEnabled] = useState(savedData?.esiEnabled !== undefined ? savedData.esiEnabled : true);
-  const [pfEmployeeRate, setPfEmployeeRate] = useState(savedData?.pfEmployeeRate || '12%');
-  const [pfEmployerRate, setPfEmployerRate] = useState(savedData?.pfEmployerRate || '12%');
-  const [pfWageLimit, setPfWageLimit] = useState(savedData?.pfWageLimit || '₹15,000');
-  const [esiEmployeeRate, setEsiEmployeeRate] = useState(savedData?.esiEmployeeRate || '0.75%');
-  const [esiEmployerRate, setEsiEmployerRate] = useState(savedData?.esiEmployerRate || '3.25%');
-  const [esiSalaryLimit, setEsiSalaryLimit] = useState(savedData?.esiSalaryLimit || '₹21,000');
-  const [salaryComponents, setSalaryComponents] = useState(savedData?.salaryComponents || initialSalaryComponents);
+  
+  // Initialize state with a function that reads from localStorage
+  const [companyName, setCompanyName] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).companyName || 'PayZenix Technologies Pvt. Ltd.' : 'PayZenix Technologies Pvt. Ltd.';
+    } catch { return 'PayZenix Technologies Pvt. Ltd.'; }
+  });
+  
+  const [registrationNumber, setRegistrationNumber] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).registrationNumber || 'CIN: U72200KA2020PTC123456' : 'CIN: U72200KA2020PTC123456';
+    } catch { return 'CIN: U72200KA2020PTC123456'; }
+  });
+  
+  const [companyPAN, setCompanyPAN] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).companyPAN || 'ABCDE1234F' : 'ABCDE1234F';
+    } catch { return 'ABCDE1234F'; }
+  });
+  
+  const [tanNumber, setTanNumber] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).tanNumber || 'BLRA12345F' : 'BLRA12345F';
+    } catch { return 'BLRA12345F'; }
+  });
+  
+  const [address, setAddress] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).address || '123, Tech Park, Whitefield, Bangalore - 560066' : '123, Tech Park, Whitefield, Bangalore - 560066';
+    } catch { return '123, Tech Park, Whitefield, Bangalore - 560066'; }
+  });
+  
+  const [pfEnabled, setPfEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.pfEnabled !== undefined ? data.pfEnabled : true;
+      }
+      return true;
+    } catch { return true; }
+  });
+  
+  const [esiEnabled, setEsiEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.esiEnabled !== undefined ? data.esiEnabled : true;
+      }
+      return true;
+    } catch { return true; }
+  });
+  
+  const [pfEmployeeRate, setPfEmployeeRate] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).pfEmployeeRate || '12%' : '12%';
+    } catch { return '12%'; }
+  });
+  
+  const [pfEmployerRate, setPfEmployerRate] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).pfEmployerRate || '12%' : '12%';
+    } catch { return '12%'; }
+  });
+  
+  const [pfWageLimit, setPfWageLimit] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).pfWageLimit || '₹15,000' : '₹15,000';
+    } catch { return '₹15,000'; }
+  });
+  
+  const [esiEmployeeRate, setEsiEmployeeRate] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).esiEmployeeRate || '0.75%' : '0.75%';
+    } catch { return '0.75%'; }
+  });
+  
+  const [esiEmployerRate, setEsiEmployerRate] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).esiEmployerRate || '3.25%' : '3.25%';
+    } catch { return '3.25%'; }
+  });
+  
+  const [esiSalaryLimit, setEsiSalaryLimit] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      return saved ? JSON.parse(saved).esiSalaryLimit || '₹21,000' : '₹21,000';
+    } catch { return '₹21,000'; }
+  });
+  
+  const [salaryComponents, setSalaryComponents] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.salaryComponents && Array.isArray(data.salaryComponents) ? data.salaryComponents : initialSalaryComponents;
+      }
+      return initialSalaryComponents;
+    } catch { return initialSalaryComponents; }
+  });
+  
   const [editingComponent, setEditingComponent] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<any>({});
-  const [notifications, setNotifications] = useState(savedData?.notifications || {
-    payrollProcessed: true,
-    payslipAvailable: true,
-    complianceReminders: true,
-    newEmployee: false,
-    loanUpdates: true,
+  
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.notifications || {
+          payrollProcessed: true,
+          payslipAvailable: true,
+          complianceReminders: true,
+          newEmployee: false,
+          loanUpdates: true,
+        };
+      }
+      return {
+        payrollProcessed: true,
+        payslipAvailable: true,
+        complianceReminders: true,
+        newEmployee: false,
+        loanUpdates: true,
+      };
+    } catch {
+      return {
+        payrollProcessed: true,
+        payslipAvailable: true,
+        complianceReminders: true,
+        newEmployee: false,
+        loanUpdates: true,
+      };
+    }
   });
+  
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   // Log on mount to verify settings loaded
   useEffect(() => {
-    if (savedData) {
-      console.log('✅ Settings loaded from localStorage on mount:', savedData);
-    } else {
-      console.log('ℹ️ No saved settings found, using defaults');
+    try {
+      const saved = localStorage.getItem('payzenix_settings');
+      if (saved) {
+        console.log('✅ Settings loaded from localStorage on mount');
+      } else {
+        console.log('ℹ️ No saved settings found, using defaults');
+      }
+    } catch (error) {
+      console.error('❌ Error accessing localStorage:', error);
     }
   }, []);
 
