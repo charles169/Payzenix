@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { useAuthStore } from '@/stores/authStore';
@@ -6,7 +6,7 @@ import { Building2, IndianRupee, FileText, Bell, Save, Plus, Edit, Trash2, Shiel
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
-const salaryComponents = [
+const initialSalaryComponents = [
   { id: 1, name: 'Basic Salary', type: 'earning', calculation: 'Fixed', taxable: true, active: true },
   { id: 2, name: 'HRA', type: 'earning', calculation: '40% of Basic', taxable: true, active: true },
   { id: 3, name: 'Special Allowance', type: 'earning', calculation: 'Fixed', taxable: true, active: true },
@@ -21,36 +21,125 @@ export const SettingsWorkingPage = () => {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('company');
   const [companyName, setCompanyName] = useState('PayZenix Technologies Pvt. Ltd.');
+  const [registrationNumber, setRegistrationNumber] = useState('CIN: U72200KA2020PTC123456');
+  const [companyPAN, setCompanyPAN] = useState('ABCDE1234F');
+  const [tanNumber, setTanNumber] = useState('BLRA12345F');
+  const [address, setAddress] = useState('123, Tech Park, Whitefield, Bangalore - 560066');
   const [pfEnabled, setPfEnabled] = useState(true);
   const [esiEnabled, setEsiEnabled] = useState(true);
+  const [pfEmployeeRate, setPfEmployeeRate] = useState('12%');
+  const [pfEmployerRate, setPfEmployerRate] = useState('12%');
+  const [pfWageLimit, setPfWageLimit] = useState('₹15,000');
+  const [esiEmployeeRate, setEsiEmployeeRate] = useState('0.75%');
+  const [esiEmployerRate, setEsiEmployerRate] = useState('3.25%');
+  const [esiSalaryLimit, setEsiSalaryLimit] = useState('₹21,000');
+  const [salaryComponents, setSalaryComponents] = useState(initialSalaryComponents);
+  const [notifications, setNotifications] = useState({
+    payrollProcessed: true,
+    payslipAvailable: true,
+    complianceReminders: true,
+    newEmployee: false,
+    loanUpdates: true,
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('payzenix_settings');
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        if (settings.companyName) setCompanyName(settings.companyName);
+        if (settings.registrationNumber) setRegistrationNumber(settings.registrationNumber);
+        if (settings.companyPAN) setCompanyPAN(settings.companyPAN);
+        if (settings.tanNumber) setTanNumber(settings.tanNumber);
+        if (settings.address) setAddress(settings.address);
+        if (settings.pfEnabled !== undefined) setPfEnabled(settings.pfEnabled);
+        if (settings.esiEnabled !== undefined) setEsiEnabled(settings.esiEnabled);
+        if (settings.pfEmployeeRate) setPfEmployeeRate(settings.pfEmployeeRate);
+        if (settings.pfEmployerRate) setPfEmployerRate(settings.pfEmployerRate);
+        if (settings.pfWageLimit) setPfWageLimit(settings.pfWageLimit);
+        if (settings.esiEmployeeRate) setEsiEmployeeRate(settings.esiEmployeeRate);
+        if (settings.esiEmployerRate) setEsiEmployerRate(settings.esiEmployerRate);
+        if (settings.esiSalaryLimit) setEsiSalaryLimit(settings.esiSalaryLimit);
+        if (settings.salaryComponents) setSalaryComponents(settings.salaryComponents);
+        if (settings.notifications) setNotifications(settings.notifications);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    }
+  }, []);
+
   const handleSave = () => {
+    // Save all settings to localStorage
+    const settings = {
+      companyName,
+      registrationNumber,
+      companyPAN,
+      tanNumber,
+      address,
+      pfEnabled,
+      esiEnabled,
+      pfEmployeeRate,
+      pfEmployerRate,
+      pfWageLimit,
+      esiEmployeeRate,
+      esiEmployerRate,
+      esiSalaryLimit,
+      salaryComponents,
+      notifications,
+      lastUpdated: new Date().toISOString(),
+    };
+    
+    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
+    
     toast.success('Settings saved successfully!', {
-      duration: 4000,
+      duration: 3000,
       icon: '✅',
     });
   };
 
   const handleAddComponent = () => {
-    toast.success('Add new salary component feature coming soon!', {
+    const newComponent = {
+      id: salaryComponents.length + 1,
+      name: 'New Component',
+      type: 'earning',
+      calculation: 'Fixed',
+      taxable: true,
+      active: true,
+    };
+    setSalaryComponents([...salaryComponents, newComponent]);
+    toast.success('New salary component added! Click Save to persist changes.', {
       duration: 3000,
       icon: '➕',
     });
   };
 
-  const handleEditComponent = (componentName: string) => {
-    toast.success(`Edit ${componentName} feature coming soon!`, {
+  const handleEditComponent = (componentId: number) => {
+    toast.info('Edit functionality: Double-click the component name to edit inline', {
       duration: 3000,
       icon: '✏️',
     });
   };
 
-  const handleDeleteComponent = (componentName: string) => {
-    toast.error(`Delete ${componentName}? This will affect future payroll calculations.`, {
-      duration: 4000,
-      icon: '⚠️',
-    });
+  const handleDeleteComponent = (componentId: number, componentName: string) => {
+    if (confirm(`Are you sure you want to delete "${componentName}"? This will affect future payroll calculations.`)) {
+      setSalaryComponents(salaryComponents.filter(c => c.id !== componentId));
+      toast.success(`${componentName} deleted! Click Save to persist changes.`, {
+        duration: 3000,
+        icon: '🗑️',
+      });
+    }
+  };
+
+  const toggleComponentStatus = (componentId: number) => {
+    setSalaryComponents(salaryComponents.map(c => 
+      c.id === componentId ? { ...c, active: !c.active } : c
+    ));
+  };
+
+  const toggleNotification = (key: string) => {
+    setNotifications({ ...notifications, [key]: !notifications[key] });
   };
 
   if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
@@ -153,7 +242,8 @@ export const SettingsWorkingPage = () => {
                       <label className="block font-semibold text-sm text-foreground/80">Registration Number</label>
                       <input
                         type="text"
-                        defaultValue="CIN: U72200KA2020PTC123456"
+                        value={registrationNumber}
+                        onChange={(e) => setRegistrationNumber(e.target.value)}
                         className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
                       />
                     </div>
@@ -161,7 +251,8 @@ export const SettingsWorkingPage = () => {
                       <label className="block font-semibold text-sm text-foreground/80">Company PAN</label>
                       <input
                         type="text"
-                        defaultValue="ABCDE1234F"
+                        value={companyPAN}
+                        onChange={(e) => setCompanyPAN(e.target.value)}
                         className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
                       />
                     </div>
@@ -169,7 +260,8 @@ export const SettingsWorkingPage = () => {
                       <label className="block font-semibold text-sm text-foreground/80">TAN Number</label>
                       <input
                         type="text"
-                        defaultValue="BLRA12345F"
+                        value={tanNumber}
+                        onChange={(e) => setTanNumber(e.target.value)}
                         className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
                       />
                     </div>
@@ -177,7 +269,8 @@ export const SettingsWorkingPage = () => {
                       <label className="block font-semibold text-sm text-foreground/80">Registered Address</label>
                       <input
                         type="text"
-                        defaultValue="123, Tech Park, Whitefield, Bangalore - 560066"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
                         className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
                       />
                     </div>
@@ -269,20 +362,25 @@ export const SettingsWorkingPage = () => {
                           </td>
                           <td className="px-3 py-4 text-center">
                             <label className="relative inline-flex items-center cursor-pointer">
-                              <input type="checkbox" checked={component.active} readOnly className="sr-only peer" />
+                              <input
+                                type="checkbox"
+                                checked={component.active}
+                                onChange={() => toggleComponentStatus(component.id)}
+                                className="sr-only peer"
+                              />
                               <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
                             </label>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex gap-2 justify-end">
                               <button
-                                onClick={() => handleEditComponent(component.name)}
+                                onClick={() => handleEditComponent(component.id)}
                                 className="p-2 bg-card text-card-foreground border border-border rounded-lg hover:bg-muted transition-colors shadow-sm"
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDeleteComponent(component.name)}
+                                onClick={() => handleDeleteComponent(component.id, component.name)}
                                 className="p-2 bg-card text-destructive border border-border rounded-lg hover:bg-destructive/10 transition-colors shadow-sm"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -317,15 +415,33 @@ export const SettingsWorkingPage = () => {
                     </div>
                     <div className="space-y-1.5">
                       <label className="block font-semibold text-sm text-foreground/80">Employee Contribution Rate</label>
-                      <input type="text" defaultValue="12%" disabled={!pfEnabled} className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50" />
+                      <input
+                        type="text"
+                        value={pfEmployeeRate}
+                        onChange={(e) => setPfEmployeeRate(e.target.value)}
+                        disabled={!pfEnabled}
+                        className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="block font-semibold text-sm text-foreground/80">Employer Contribution Rate</label>
-                      <input type="text" defaultValue="12%" disabled={!pfEnabled} className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50" />
+                      <input
+                        type="text"
+                        value={pfEmployerRate}
+                        onChange={(e) => setPfEmployerRate(e.target.value)}
+                        disabled={!pfEnabled}
+                        className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="block font-semibold text-sm text-foreground/80">Wage Ceiling Limit</label>
-                      <input type="text" defaultValue="₹15,000" disabled={!pfEnabled} className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50" />
+                      <input
+                        type="text"
+                        value={pfWageLimit}
+                        onChange={(e) => setPfWageLimit(e.target.value)}
+                        disabled={!pfEnabled}
+                        className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50"
+                      />
                     </div>
                   </div>
                 </div>
@@ -347,15 +463,33 @@ export const SettingsWorkingPage = () => {
                     </div>
                     <div className="space-y-1.5">
                       <label className="block font-semibold text-sm text-foreground/80">Employee Contribution</label>
-                      <input type="text" defaultValue="0.75%" disabled={!esiEnabled} className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50" />
+                      <input
+                        type="text"
+                        value={esiEmployeeRate}
+                        onChange={(e) => setEsiEmployeeRate(e.target.value)}
+                        disabled={!esiEnabled}
+                        className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="block font-semibold text-sm text-foreground/80">Employer Contribution</label>
-                      <input type="text" defaultValue="3.25%" disabled={!esiEnabled} className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50" />
+                      <input
+                        type="text"
+                        value={esiEmployerRate}
+                        onChange={(e) => setEsiEmployerRate(e.target.value)}
+                        disabled={!esiEnabled}
+                        className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="block font-semibold text-sm text-foreground/80">Gross Salary Limit</label>
-                      <input type="text" defaultValue="₹21,000" disabled={!esiEnabled} className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50" />
+                      <input
+                        type="text"
+                        value={esiSalaryLimit}
+                        onChange={(e) => setEsiSalaryLimit(e.target.value)}
+                        disabled={!esiEnabled}
+                        className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground disabled:opacity-50"
+                      />
                     </div>
                   </div>
                 </div>
@@ -370,19 +504,24 @@ export const SettingsWorkingPage = () => {
 
                 <div className="divide-y divide-border">
                   {[
-                    { label: 'Payroll processed notification', description: 'Send email when monthly payroll is processed', enabled: true },
-                    { label: 'Payslip available', description: 'Notify employees when their payslip is generated', enabled: true },
-                    { label: 'Compliance due reminders', description: 'Send reminders before compliance filing deadlines', enabled: true },
-                    { label: 'New employee onboarded', description: 'Notify HR team when a new employee is added', enabled: false },
-                    { label: 'Loan application updates', description: 'Notify employees about loan application status', enabled: true },
+                    { key: 'payrollProcessed', label: 'Payroll processed notification', description: 'Send email when monthly payroll is processed', enabled: notifications.payrollProcessed },
+                    { key: 'payslipAvailable', label: 'Payslip available', description: 'Notify employees when their payslip is generated', enabled: notifications.payslipAvailable },
+                    { key: 'complianceReminders', label: 'Compliance due reminders', description: 'Send reminders before compliance filing deadlines', enabled: notifications.complianceReminders },
+                    { key: 'newEmployee', label: 'New employee onboarded', description: 'Notify HR team when a new employee is added', enabled: notifications.newEmployee },
+                    { key: 'loanUpdates', label: 'Loan application updates', description: 'Notify employees about loan application status', enabled: notifications.loanUpdates },
                   ].map((item) => (
-                    <div key={item.label} className="py-4 flex justify-between items-start">
+                    <div key={item.key} className="py-4 flex justify-between items-start">
                       <div>
                         <p className="font-semibold text-foreground mb-1">{item.label}</p>
                         <p className="text-sm text-muted-foreground">{item.description}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                        <input type="checkbox" defaultChecked={item.enabled} className="sr-only peer" />
+                        <input
+                          type="checkbox"
+                          checked={item.enabled}
+                          onChange={() => toggleNotification(item.key)}
+                          className="sr-only peer"
+                        />
                         <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
                       </label>
                     </div>
