@@ -167,13 +167,51 @@ export const SettingsWorkingPage = () => {
   };
 
   const toggleComponentStatus = (componentId: number) => {
-    setSalaryComponents(salaryComponents.map(c => 
+    const updatedComponents = salaryComponents.map(c => 
       c.id === componentId ? { ...c, active: !c.active } : c
-    ));
+    );
+    setSalaryComponents(updatedComponents);
+    
+    // Auto-save to localStorage
+    const settings = JSON.parse(localStorage.getItem('payzenix_settings') || '{}');
+    settings.salaryComponents = updatedComponents;
+    settings.lastUpdated = new Date().toISOString();
+    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
+    console.log('🔄 Auto-saved component toggle');
   };
 
   const toggleNotification = (key: string) => {
-    setNotifications({ ...notifications, [key]: !notifications[key] });
+    const updatedNotifications = { ...notifications, [key]: !notifications[key] };
+    setNotifications(updatedNotifications);
+    
+    // Auto-save to localStorage
+    const settings = JSON.parse(localStorage.getItem('payzenix_settings') || '{}');
+    settings.notifications = updatedNotifications;
+    settings.lastUpdated = new Date().toISOString();
+    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
+    console.log('🔄 Auto-saved notification toggle');
+  };
+
+  const handlePfToggle = (enabled: boolean) => {
+    setPfEnabled(enabled);
+    
+    // Auto-save to localStorage
+    const settings = JSON.parse(localStorage.getItem('payzenix_settings') || '{}');
+    settings.pfEnabled = enabled;
+    settings.lastUpdated = new Date().toISOString();
+    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
+    console.log('🔄 Auto-saved PF toggle:', enabled);
+  };
+
+  const handleEsiToggle = (enabled: boolean) => {
+    setEsiEnabled(enabled);
+    
+    // Auto-save to localStorage
+    const settings = JSON.parse(localStorage.getItem('payzenix_settings') || '{}');
+    settings.esiEnabled = enabled;
+    settings.lastUpdated = new Date().toISOString();
+    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
+    console.log('🔄 Auto-saved ESI toggle:', enabled);
   };
 
   if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
@@ -497,7 +535,7 @@ export const SettingsWorkingPage = () => {
                     <div className="flex justify-between items-center bg-muted/20 p-3 rounded-lg border border-border">
                       <label className="font-semibold text-sm">Enable PF Deduction</label>
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" checked={pfEnabled} onChange={(e) => setPfEnabled(e.target.checked)} className="sr-only peer" />
+                        <input type="checkbox" checked={pfEnabled} onChange={(e) => handlePfToggle(e.target.checked)} className="sr-only peer" />
                         <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
                       </label>
                     </div>
@@ -545,7 +583,7 @@ export const SettingsWorkingPage = () => {
                     <div className="flex justify-between items-center bg-muted/20 p-3 rounded-lg border border-border">
                       <label className="font-semibold text-sm">Enable ESI Deduction</label>
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" checked={esiEnabled} onChange={(e) => setEsiEnabled(e.target.checked)} className="sr-only peer" />
+                        <input type="checkbox" checked={esiEnabled} onChange={(e) => handleEsiToggle(e.target.checked)} className="sr-only peer" />
                         <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
                       </label>
                     </div>
