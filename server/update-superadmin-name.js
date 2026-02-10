@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import User from './models/User.js';
+import Employee from './models/Employee.js';
 
 dotenv.config();
 
@@ -12,18 +13,35 @@ const updateSuperAdminName = async () => {
 
         const newName = 'Jesika'; // Super Admin name
 
-        const result = await User.updateOne(
+        // Update User model
+        const userResult = await User.updateOne(
             { role: 'superadmin' },
             { $set: { name: newName } }
         );
 
+        // Update Employee model
+        const employeeResult = await Employee.updateOne(
+            { email: 'superadmin@payzenix.com' },
+            { $set: { name: newName } }
+        );
+
         console.log(`\n✅ Updated super admin name to: ${newName}`);
+        console.log(`   User records updated: ${userResult.modifiedCount}`);
+        console.log(`   Employee records updated: ${employeeResult.modifiedCount}`);
 
         const superAdmin = await User.findOne({ role: 'superadmin' });
-        console.log('\n📋 Super Admin Details:');
+        console.log('\n📋 Super Admin User Details:');
         console.log(`   Name: ${superAdmin.name}`);
         console.log(`   Email: ${superAdmin.email}`);
         console.log(`   Role: ${superAdmin.role}`);
+
+        const superAdminEmployee = await Employee.findOne({ email: 'superadmin@payzenix.com' });
+        if (superAdminEmployee) {
+            console.log('\n📋 Super Admin Employee Details:');
+            console.log(`   Name: ${superAdminEmployee.name}`);
+            console.log(`   Email: ${superAdminEmployee.email}`);
+            console.log(`   Employee ID: ${superAdminEmployee.employeeId}`);
+        }
 
         process.exit(0);
     } catch (error) {
