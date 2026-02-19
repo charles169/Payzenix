@@ -6,8 +6,10 @@ import toast from 'react-hot-toast';
 import { payrollAPI } from '@/services/api';
 import { usePageFocus } from '@/hooks/usePageFocus';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 
 export const PayoutsWorkingPage = () => {
+  const { user } = useAuthStore();
   const [payslips, setPayslips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -17,6 +19,10 @@ export const PayoutsWorkingPage = () => {
   const [preview, setPreview] = useState<any>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [editingPayslip, setEditingPayslip] = useState<string | null>(null);
+
+  // Check if user can edit (only superadmin and admin)
+  const canEdit = user?.role === 'superadmin' || user?.role === 'admin';
 
   const loadPayslips = async () => {
     try {
@@ -98,10 +104,44 @@ export const PayoutsWorkingPage = () => {
     }
   };
 
+  const handleEdit = async (payslip: any) => {
+    if (!canEdit) {
+      toast.error('Only superadmin and admin can edit payslips');
+      return;
+    }
+
+    console.log('✏️ Edit clicked:', payslip);
+    setEditingPayslip(payslip._id);
+    
+    // Cycle through statuses: pending -> processed -> paid -> pending
+    const statusCycle = { pending: 'processed', processed: 'paid', paid: 'pending' };
+    const newStatus = statusCycle[payslip.status as keyof typeof statusCycle] || 'pending';
+    
+    try {
+      await payrollAPI.update(payslip._id, { status: newStatus });
+      
+      // Update local state
+      setPayslips((prev) =>
+        prev.map((p) =>
+          p._id === payslip._id ? { ...p, status: newStatus } : p
+        )
+      );
+      
+      toast.success(`Status updated to ${newStatus}!`);
+      
+      // Reload data after 500ms
+      setTimeout(() => loadPayslips(), 500);
+    } catch (error) {
+      console.error('❌ Error updating status:', error);
+      toast.error('Failed to update status');
+    } finally {
+      setEditingPayslip(null);
+    }
+  };
+
   const handlePreview = (payslip: any) => {
     console.log('👁️ Preview clicked:', payslip);
     setPreview(payslip);
-    toast.success('Opening payslip preview...');
   };
 
   const downloadCSV = (rows: any[], name = 'payslips.csv') => {
@@ -358,15 +398,19 @@ export const PayoutsWorkingPage = () => {
                               <td className="p-4">
                                 <div className="flex gap-2 justify-end">
                                   <button
-                                    disabled={!selected.includes(p._id)}
-                                    onClick={() => updateStatus('pending')}
+                                    onClick={() => handleEdit(p)}
+                                    disabled={!canEdit || editingPayslip === p._id}
                                     className={cn(
                                       "p-2 bg-card border border-border rounded-lg transition-all shadow-sm active:scale-95",
-                                      selected.includes(p._id) ? "hover:bg-amber-500/10 text-amber-500 hover:border-amber-500/30" : "grayscale opacity-30 cursor-not-allowed"
+                                      canEdit ? "hover:bg-amber-500/10 text-amber-500 hover:border-amber-500/30" : "grayscale opacity-30 cursor-not-allowed"
                                     )}
-                                    title="Edit status"
+                                    title={canEdit ? "Edit status (cycles through pending/processed/paid)" : "Only superadmin and admin can edit"}
                                   >
-                                    <Pencil className="w-4 h-4" />
+                                    {editingPayslip === p._id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Pencil className="w-4 h-4" />
+                                    )}
                                   </button>
                                   <button
                                     onClick={() => handlePreview(p)}

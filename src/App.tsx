@@ -112,7 +112,7 @@ const AppRoutes = () => {
       } />
 
       <Route path="/my-payslips" element={
-        <ProtectedRoute allowedRoles={["employee"]}>
+        <ProtectedRoute allowedRoles={["employee", "admin", "superadmin"]}>
           <AppLayout><MyPayslipsPage /></AppLayout>
         </ProtectedRoute>
       } />
@@ -186,7 +186,7 @@ const App = () => (
           },
         }}
       />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>

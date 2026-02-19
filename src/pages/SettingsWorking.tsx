@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { Building2, IndianRupee, FileText, Bell, Save, Plus, Edit, Trash2, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import api from '@/services/api';
 
 const initialSalaryComponents = [
   { id: 1, name: 'Basic Salary', type: 'earning', calculation: 'Fixed', taxable: true, active: true },
@@ -20,200 +21,128 @@ const initialSalaryComponents = [
 export const SettingsWorkingPage = () => {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('company');
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   
-  // Initialize state with a function that reads from localStorage
-  const [companyName, setCompanyName] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).companyName || 'PayZenix Technologies Pvt. Ltd.' : 'PayZenix Technologies Pvt. Ltd.';
-    } catch { return 'PayZenix Technologies Pvt. Ltd.'; }
-  });
-  
-  const [registrationNumber, setRegistrationNumber] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).registrationNumber || 'CIN: U72200KA2020PTC123456' : 'CIN: U72200KA2020PTC123456';
-    } catch { return 'CIN: U72200KA2020PTC123456'; }
-  });
-  
-  const [companyPAN, setCompanyPAN] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).companyPAN || 'ABCDE1234F' : 'ABCDE1234F';
-    } catch { return 'ABCDE1234F'; }
-  });
-  
-  const [tanNumber, setTanNumber] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).tanNumber || 'BLRA12345F' : 'BLRA12345F';
-    } catch { return 'BLRA12345F'; }
-  });
-  
-  const [address, setAddress] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).address || '123, Tech Park, Whitefield, Bangalore - 560066' : '123, Tech Park, Whitefield, Bangalore - 560066';
-    } catch { return '123, Tech Park, Whitefield, Bangalore - 560066'; }
-  });
-  
-  const [pfEnabled, setPfEnabled] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      if (saved) {
-        const data = JSON.parse(saved);
-        return data.pfEnabled !== undefined ? data.pfEnabled : true;
-      }
-      return true;
-    } catch { return true; }
-  });
-  
-  const [esiEnabled, setEsiEnabled] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      if (saved) {
-        const data = JSON.parse(saved);
-        return data.esiEnabled !== undefined ? data.esiEnabled : true;
-      }
-      return true;
-    } catch { return true; }
-  });
-  
-  const [pfEmployeeRate, setPfEmployeeRate] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).pfEmployeeRate || '12%' : '12%';
-    } catch { return '12%'; }
-  });
-  
-  const [pfEmployerRate, setPfEmployerRate] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).pfEmployerRate || '12%' : '12%';
-    } catch { return '12%'; }
-  });
-  
-  const [pfWageLimit, setPfWageLimit] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).pfWageLimit || '₹15,000' : '₹15,000';
-    } catch { return '₹15,000'; }
-  });
-  
-  const [esiEmployeeRate, setEsiEmployeeRate] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).esiEmployeeRate || '0.75%' : '0.75%';
-    } catch { return '0.75%'; }
-  });
-  
-  const [esiEmployerRate, setEsiEmployerRate] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).esiEmployerRate || '3.25%' : '3.25%';
-    } catch { return '3.25%'; }
-  });
-  
-  const [esiSalaryLimit, setEsiSalaryLimit] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      return saved ? JSON.parse(saved).esiSalaryLimit || '₹21,000' : '₹21,000';
-    } catch { return '₹21,000'; }
-  });
-  
-  const [salaryComponents, setSalaryComponents] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      if (saved) {
-        const data = JSON.parse(saved);
-        return data.salaryComponents && Array.isArray(data.salaryComponents) ? data.salaryComponents : initialSalaryComponents;
-      }
-      return initialSalaryComponents;
-    } catch { return initialSalaryComponents; }
-  });
-  
+  // State variables
+  const [companyName, setCompanyName] = useState('PayZenix Technologies Pvt. Ltd.');
+  const [registrationNumber, setRegistrationNumber] = useState('CIN: U72200KA2020PTC123456');
+  const [companyPAN, setCompanyPAN] = useState('ABCDE1234F');
+  const [tanNumber, setTanNumber] = useState('BLRA12345F');
+  const [address, setAddress] = useState('123, Tech Park, Whitefield, Bangalore - 560066');
+  const [pfEnabled, setPfEnabled] = useState(true);
+  const [esiEnabled, setEsiEnabled] = useState(true);
+  const [pfEmployeeRate, setPfEmployeeRate] = useState('12%');
+  const [pfEmployerRate, setPfEmployerRate] = useState('12%');
+  const [pfWageLimit, setPfWageLimit] = useState('₹15,000');
+  const [esiEmployeeRate, setEsiEmployeeRate] = useState('0.75%');
+  const [esiEmployerRate, setEsiEmployerRate] = useState('3.25%');
+  const [esiSalaryLimit, setEsiSalaryLimit] = useState('₹21,000');
+  const [salaryComponents, setSalaryComponents] = useState(initialSalaryComponents);
   const [editingComponent, setEditingComponent] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<any>({});
-  
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      if (saved) {
-        const data = JSON.parse(saved);
-        return data.notifications || {
-          payrollProcessed: true,
-          payslipAvailable: true,
-          complianceReminders: true,
-          newEmployee: false,
-          loanUpdates: true,
-        };
-      }
-      return {
-        payrollProcessed: true,
-        payslipAvailable: true,
-        complianceReminders: true,
-        newEmployee: false,
-        loanUpdates: true,
-      };
-    } catch {
-      return {
-        payrollProcessed: true,
-        payslipAvailable: true,
-        complianceReminders: true,
-        newEmployee: false,
-        loanUpdates: true,
-      };
-    }
+  const [notifications, setNotifications] = useState({
+    payrollProcessed: true,
+    payslipAvailable: true,
+    complianceReminders: true,
+    newEmployee: false,
+    loanUpdates: true,
   });
-  
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
-  // Log on mount to verify settings loaded
+  // Filter salary components based on search
+  const filteredComponents = salaryComponents.filter(component =>
+    component.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    component.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    component.calculation.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Load settings from database on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('payzenix_settings');
-      if (saved) {
-        console.log('✅ Settings loaded from localStorage on mount');
-      } else {
-        console.log('ℹ️ No saved settings found, using defaults');
-      }
-    } catch (error) {
-      console.error('❌ Error accessing localStorage:', error);
-    }
+    loadSettings();
   }, []);
 
-  const handleSave = () => {
-    // Save all settings to localStorage
-    const settings = {
-      companyName,
-      registrationNumber,
-      companyPAN,
-      tanNumber,
-      address,
-      pfEnabled,
-      esiEnabled,
-      pfEmployeeRate,
-      pfEmployerRate,
-      pfWageLimit,
-      esiEmployeeRate,
-      esiEmployerRate,
-      esiSalaryLimit,
-      salaryComponents,
-      notifications,
-      lastUpdated: new Date().toISOString(),
-    };
-    
-    console.log('💾 Saving settings to localStorage:', settings);
-    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
-    console.log('✅ Settings saved successfully');
-    
-    toast.success('Settings saved successfully! Changes will persist after refresh.', {
-      duration: 3000,
-      icon: '✅',
-    });
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Loading settings from database...');
+      const data = await api.get('/settings');
+      
+      console.log('✅ Settings loaded from database:', data);
+      
+      // Update all state variables with database values
+      setCompanyName(data.companyName || 'PayZenix Technologies Pvt. Ltd.');
+      setRegistrationNumber(data.registrationNumber || 'CIN: U72200KA2020PTC123456');
+      setCompanyPAN(data.companyPAN || 'ABCDE1234F');
+      setTanNumber(data.tanNumber || 'BLRA12345F');
+      setAddress(data.address || '123, Tech Park, Whitefield, Bangalore - 560066');
+      setPfEnabled(data.pfEnabled !== undefined ? data.pfEnabled : true);
+      setEsiEnabled(data.esiEnabled !== undefined ? data.esiEnabled : true);
+      setPfEmployeeRate(data.pfEmployeeRate || '12%');
+      setPfEmployerRate(data.pfEmployerRate || '12%');
+      setPfWageLimit(data.pfWageLimit || '₹15,000');
+      setEsiEmployeeRate(data.esiEmployeeRate || '0.75%');
+      setEsiEmployerRate(data.esiEmployerRate || '3.25%');
+      setEsiSalaryLimit(data.esiSalaryLimit || '₹21,000');
+      setSalaryComponents(data.salaryComponents && data.salaryComponents.length > 0 ? data.salaryComponents : initialSalaryComponents);
+      setNotifications(data.notifications || {
+        payrollProcessed: true,
+        payslipAvailable: true,
+        complianceReminders: true,
+        newEmployee: false,
+        loanUpdates: true,
+      });
+    } catch (error: any) {
+      console.error('❌ Error loading settings:', error);
+      // Don't show error toast, just use default values
+      console.log('ℹ️ Using default settings values');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddComponent = () => {
+  const handleSave = async () => {
+    try {
+      console.log('💾 Saving settings to database...');
+      
+      const settings = {
+        companyName,
+        registrationNumber,
+        companyPAN,
+        tanNumber,
+        address,
+        pfEnabled,
+        esiEnabled,
+        pfEmployeeRate,
+        pfEmployerRate,
+        pfWageLimit,
+        esiEmployeeRate,
+        esiEmployerRate,
+        esiSalaryLimit,
+        salaryComponents,
+        notifications,
+      };
+      
+      console.log('📤 Sending settings:', settings);
+      const response = await api.put('/settings', settings);
+      console.log('📥 Response:', response);
+      
+      console.log('✅ Settings saved to database successfully');
+      toast.success('Settings saved successfully to database!', {
+        duration: 3000,
+        icon: '✅',
+      });
+      
+      // Reload settings to confirm
+      setTimeout(() => loadSettings(), 500);
+    } catch (error: any) {
+      console.error('❌ Error saving settings:', error);
+      console.error('❌ Error details:', error.message, error.stack);
+      toast.error(error.message || 'Failed to save settings');
+    }
+  };
+
+  const handleAddComponent = async () => {
     const newComponent = {
       id: salaryComponents.length + 1,
       name: 'New Component',
@@ -222,11 +151,22 @@ export const SettingsWorkingPage = () => {
       taxable: true,
       active: true,
     };
-    setSalaryComponents([...salaryComponents, newComponent]);
-    toast.success('New salary component added! Click Save to persist changes.', {
-      duration: 3000,
-      icon: '➕',
-    });
+    const updatedComponents = [...salaryComponents, newComponent];
+    setSalaryComponents(updatedComponents);
+    
+    // Save to database immediately
+    try {
+      await api.put('/settings', { salaryComponents: updatedComponents });
+      toast.success('New component added and saved to database!', {
+        duration: 3000,
+        icon: '➕',
+      });
+      // Reload settings after 500ms
+      setTimeout(() => loadSettings(), 500);
+    } catch (error: any) {
+      console.error('❌ Error adding component:', error);
+      toast.error(error.message || 'Failed to add component');
+    }
   };
 
   const handleEditComponent = (componentId: number) => {
@@ -241,16 +181,27 @@ export const SettingsWorkingPage = () => {
     }
   };
 
-  const handleSaveEdit = (componentId: number) => {
-    setSalaryComponents(salaryComponents.map(c => 
+  const handleSaveEdit = async (componentId: number) => {
+    const updatedComponents = salaryComponents.map(c => 
       c.id === componentId ? { ...c, ...editValues } : c
-    ));
+    );
+    setSalaryComponents(updatedComponents);
     setEditingComponent(null);
     setEditValues({});
-    toast.success('Component updated! Click Save Changes to persist.', {
-      duration: 3000,
-      icon: '✅',
-    });
+    
+    // Save to database immediately
+    try {
+      await api.put('/settings', { salaryComponents: updatedComponents });
+      toast.success('Component updated and saved to database!', {
+        duration: 3000,
+        icon: '✅',
+      });
+      // Reload settings after 500ms
+      setTimeout(() => loadSettings(), 500);
+    } catch (error: any) {
+      console.error('❌ Error saving component:', error);
+      toast.error(error.message || 'Failed to save component');
+    }
   };
 
   const handleCancelEdit = () => {
@@ -258,62 +209,77 @@ export const SettingsWorkingPage = () => {
     setEditValues({});
   };
 
-  const handleDeleteComponent = (componentId: number, componentName: string) => {
+  const handleDeleteComponent = async (componentId: number, componentName: string) => {
     if (confirm(`Are you sure you want to delete "${componentName}"? This will affect future payroll calculations.`)) {
-      setSalaryComponents(salaryComponents.filter(c => c.id !== componentId));
-      toast.success(`${componentName} deleted! Click Save to persist changes.`, {
-        duration: 3000,
-        icon: '🗑️',
-      });
+      const updatedComponents = salaryComponents.filter(c => c.id !== componentId);
+      setSalaryComponents(updatedComponents);
+      
+      // Save to database immediately
+      try {
+        await api.put('/settings', { salaryComponents: updatedComponents });
+        toast.success(`${componentName} deleted and saved to database!`, {
+          duration: 3000,
+          icon: '🗑️',
+        });
+        // Reload settings after 500ms
+        setTimeout(() => loadSettings(), 500);
+      } catch (error: any) {
+        console.error('❌ Error deleting component:', error);
+        toast.error(error.message || 'Failed to delete component');
+      }
     }
   };
 
-  const toggleComponentStatus = (componentId: number) => {
+  const toggleComponentStatus = async (componentId: number) => {
     const updatedComponents = salaryComponents.map(c => 
       c.id === componentId ? { ...c, active: !c.active } : c
     );
     setSalaryComponents(updatedComponents);
     
-    // Auto-save to localStorage
-    const settings = JSON.parse(localStorage.getItem('payzenix_settings') || '{}');
-    settings.salaryComponents = updatedComponents;
-    settings.lastUpdated = new Date().toISOString();
-    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
-    console.log('🔄 Auto-saved component toggle');
+    // Auto-save to database
+    try {
+      await api.put('/settings', { salaryComponents: updatedComponents });
+      console.log('🔄 Auto-saved component toggle to database');
+    } catch (error) {
+      console.error('❌ Error auto-saving component toggle:', error);
+    }
   };
 
-  const toggleNotification = (key: string) => {
+  const toggleNotification = async (key: string) => {
     const updatedNotifications = { ...notifications, [key]: !notifications[key] };
     setNotifications(updatedNotifications);
     
-    // Auto-save to localStorage
-    const settings = JSON.parse(localStorage.getItem('payzenix_settings') || '{}');
-    settings.notifications = updatedNotifications;
-    settings.lastUpdated = new Date().toISOString();
-    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
-    console.log('🔄 Auto-saved notification toggle');
+    // Auto-save to database
+    try {
+      await api.put('/settings', { notifications: updatedNotifications });
+      console.log('🔄 Auto-saved notification toggle to database');
+    } catch (error) {
+      console.error('❌ Error auto-saving notification toggle:', error);
+    }
   };
 
-  const handlePfToggle = (enabled: boolean) => {
+  const handlePfToggle = async (enabled: boolean) => {
     setPfEnabled(enabled);
     
-    // Auto-save to localStorage
-    const settings = JSON.parse(localStorage.getItem('payzenix_settings') || '{}');
-    settings.pfEnabled = enabled;
-    settings.lastUpdated = new Date().toISOString();
-    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
-    console.log('🔄 Auto-saved PF toggle:', enabled);
+    // Auto-save to database
+    try {
+      await api.put('/settings', { pfEnabled: enabled });
+      console.log('🔄 Auto-saved PF toggle to database:', enabled);
+    } catch (error) {
+      console.error('❌ Error auto-saving PF toggle:', error);
+    }
   };
 
-  const handleEsiToggle = (enabled: boolean) => {
+  const handleEsiToggle = async (enabled: boolean) => {
     setEsiEnabled(enabled);
     
-    // Auto-save to localStorage
-    const settings = JSON.parse(localStorage.getItem('payzenix_settings') || '{}');
-    settings.esiEnabled = enabled;
-    settings.lastUpdated = new Date().toISOString();
-    localStorage.setItem('payzenix_settings', JSON.stringify(settings));
-    console.log('🔄 Auto-saved ESI toggle:', enabled);
+    // Auto-save to database
+    try {
+      await api.put('/settings', { esiEnabled: enabled });
+      console.log('🔄 Auto-saved ESI toggle to database:', enabled);
+    } catch (error) {
+      console.error('❌ Error auto-saving ESI toggle:', error);
+    }
   };
 
   if (!user || (user.role !== 'superadmin' && user.role !== 'admin')) {
@@ -339,6 +305,38 @@ export const SettingsWorkingPage = () => {
                 <h2 className="text-2xl font-bold mb-3">Access Denied</h2>
                 <p className="text-muted-foreground text-sm">
                   You don't have permission to access this page. Only super admins and administrators can view settings.
+                </p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div
+          onMouseEnter={() => setSidebarCollapsed(false)}
+          onMouseLeave={() => setSidebarCollapsed(true)}
+        >
+          <Sidebar />
+        </div>
+        <div
+          className={cn(
+            "transition-all duration-300",
+            sidebarCollapsed ? "ml-[80px]" : "ml-[280px]"
+          )}
+        >
+          <Header />
+          <main className="p-6">
+            <div className="max-w-xl mx-auto mt-24 text-center">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border p-10 shadow-lg">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-5"></div>
+                <h2 className="text-2xl font-bold mb-3">Loading Settings...</h2>
+                <p className="text-muted-foreground text-sm">
+                  Please wait while we load your settings from the database.
                 </p>
               </div>
             </div>
@@ -490,18 +488,29 @@ export const SettingsWorkingPage = () => {
             {/* Salary Tab */}
             {activeTab === 'salary' && (
               <div className="bg-card text-card-foreground rounded-xl border border-border overflow-hidden shadow-md">
-                <div className="p-6 border-b border-border flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl font-bold mb-1 border-none">Salary Components</h2>
-                    <p className="text-muted-foreground text-sm">Configure earnings and deductions for salary calculation</p>
+                <div className="p-6 border-b border-border">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h2 className="text-xl font-bold mb-1 border-none">Salary Components</h2>
+                      <p className="text-muted-foreground text-sm">Configure earnings and deductions for salary calculation</p>
+                    </div>
+                    <button
+                      onClick={handleAddComponent}
+                      className="px-4 py-2 bg-primary text-primary-foreground border-none rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-md active:scale-95"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Component
+                    </button>
                   </div>
-                  <button
-                    onClick={handleAddComponent}
-                    className="px-4 py-2 bg-primary text-primary-foreground border-none rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-md active:scale-95"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Component
-                  </button>
+                  
+                  {/* Search Input */}
+                  <input
+                    type="text"
+                    placeholder="Search components..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground"
+                  />
                 </div>
 
                 <div className="overflow-x-auto">
@@ -517,7 +526,7 @@ export const SettingsWorkingPage = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {salaryComponents.map((component) => (
+                      {filteredComponents.map((component) => (
                         <tr key={component.id} className="hover:bg-muted/30 transition-colors">
                           <td className="px-6 py-4 font-semibold text-foreground">
                             {editingComponent === component.id ? (

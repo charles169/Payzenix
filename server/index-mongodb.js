@@ -9,6 +9,7 @@ import Employee from './models/Employee.js';
 import Payroll from './models/Payroll.js';
 import Loan from './models/Loan.js';
 import AuditLog from './models/AuditLog.js';
+import Settings from './models/Settings.js';
 
 dotenv.config();
 
@@ -627,6 +628,88 @@ app.get('/api/dashboard/stats', protect, async (req, res) => {
   }
 });
 
+// ==================== SETTINGS ROUTES ====================
+
+// Get settings (creates default if not exists)
+app.get('/api/settings', protect, async (req, res) => {
+  try {
+    // Role check: Only superadmin and admin can access settings
+    if (!['superadmin', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Forbidden: Access denied' });
+    }
+
+    let settings = await Settings.findOne();
+    
+    // If no settings exist, create default settings
+    if (!settings) {
+      settings = await Settings.create({
+        salaryComponents: [
+          { id: 1, name: 'Basic Salary', type: 'earning', calculation: 'Fixed', taxable: true, active: true },
+          { id: 2, name: 'HRA', type: 'earning', calculation: '40% of Basic', taxable: true, active: true },
+          { id: 3, name: 'Special Allowance', type: 'earning', calculation: 'Fixed', taxable: true, active: true },
+          { id: 4, name: 'Conveyance Allowance', type: 'earning', calculation: 'Fixed', taxable: false, active: true },
+          { id: 5, name: 'Medical Allowance', type: 'earning', calculation: 'Fixed', taxable: false, active: true },
+          { id: 6, name: 'PF Deduction', type: 'deduction', calculation: '12% of Basic', taxable: false, active: true },
+          { id: 7, name: 'Professional Tax', type: 'deduction', calculation: 'State Rules', taxable: false, active: true },
+          { id: 8, name: 'TDS', type: 'deduction', calculation: 'As per slab', taxable: false, active: true },
+        ]
+      });
+      console.log('✅ Created default settings');
+    }
+
+    res.json(settings);
+  } catch (error) {
+    console.error('❌ Error fetching settings:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update settings
+app.put('/api/settings', protect, async (req, res) => {
+  try {
+    // Role check: Only superadmin and admin can update settings
+    if (!['superadmin', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Forbidden: Access denied' });
+    }
+
+    let settings = await Settings.findOne();
+    
+    if (!settings) {
+      // Create new settings if none exist
+      settings = await Settings.create({
+        ...req.body,
+        updatedBy: req.user._id
+      });
+    } else {
+      // Update existing settings
+      Object.assign(settings, req.body);
+      settings.updatedBy = req.user._id;
+      settings.lastUpdated = new Date();
+      await settings.save();
+    }
+
+    // Create audit log
+    try {
+      await AuditLog.create({
+        action: 'Settings Updated',
+        user: req.user?.name || 'Unknown',
+        userId: req.user?._id?.toString() || 'unknown',
+        details: 'Updated system settings',
+        type: 'update',
+        module: 'Settings'
+      });
+    } catch (auditError) {
+      console.error('Failed to create audit log:', auditError);
+    }
+
+    console.log('✅ Settings updated successfully');
+    res.json(settings);
+  } catch (error) {
+    console.error('❌ Error updating settings:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({
@@ -660,7 +743,9 @@ app.use((req, res) => {
       'PUT /api/loans/:id/approve',
       'DELETE /api/loans/:id',
       'GET /api/audit-logs',
-      'GET /api/dashboard/stats'
+      'GET /api/dashboard/stats',
+      'GET /api/settings',
+      'PUT /api/settings'
     ]
   });
 });

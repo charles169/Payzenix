@@ -151,23 +151,137 @@ export const MyPayslipsPage = () => {
               </div>
             </div>
 
-            {/* PDF */}
-            <div className="flex-1 px-3">
-              <iframe
-                src="/sample-payslip.pdf"
-                className="w-full h-full rounded-md border"
-              />
+            {/* Detailed Breakdown */}
+            <div className="flex-1 px-4 py-3 overflow-y-auto space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">Earnings</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Basic Salary</span>
+                    <span>₹{(activePayslip.gross * 0.5).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>HRA</span>
+                    <span>₹{(activePayslip.gross * 0.3).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Special Allowance</span>
+                    <span>₹{(activePayslip.gross * 0.15).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Other Allowances</span>
+                    <span>₹{(activePayslip.gross * 0.05).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold pt-2 border-t">
+                    <span>Total Earnings</span>
+                    <span>₹{activePayslip.gross.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Deductions</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>PF (Employee)</span>
+                    <span>₹{(activePayslip.deduction * 0.5).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Professional Tax</span>
+                    <span>₹{(activePayslip.deduction * 0.15).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>TDS</span>
+                    <span>₹{(activePayslip.deduction * 0.35).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold pt-2 border-t text-destructive">
+                    <span>Total Deductions</span>
+                    <span>-₹{activePayslip.deduction.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-primary/10 p-3 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold">Net Payable</span>
+                  <span className="text-xl font-bold text-primary">
+                    ₹{activePayslip.net.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Amount credited to your account
+                </p>
+              </div>
+
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p><strong>Payment Date:</strong> 1st of the month</p>
+                <p><strong>Payment Mode:</strong> Bank Transfer</p>
+                <p><strong>Bank Account:</strong> XXXX XXXX XXXX 1234</p>
+              </div>
             </div>
 
             {/* Actions */}
             <div className="p-3 border-t flex gap-2">
-              <Button className="flex-1">
+              <Button 
+                className="flex-1"
+                onClick={() => {
+                  // Generate PDF content
+                  const content = `
+PAYSLIP - ${activePayslip.month}
+================================
+
+EARNINGS:
+Basic Salary:        ₹${(activePayslip.gross * 0.5).toLocaleString('en-IN')}
+HRA:                 ₹${(activePayslip.gross * 0.3).toLocaleString('en-IN')}
+Special Allowance:   ₹${(activePayslip.gross * 0.15).toLocaleString('en-IN')}
+Other Allowances:    ₹${(activePayslip.gross * 0.05).toLocaleString('en-IN')}
+--------------------------------
+Total Earnings:      ₹${activePayslip.gross.toLocaleString('en-IN')}
+
+DEDUCTIONS:
+PF (Employee):       ₹${(activePayslip.deduction * 0.5).toLocaleString('en-IN')}
+Professional Tax:    ₹${(activePayslip.deduction * 0.15).toLocaleString('en-IN')}
+TDS:                 ₹${(activePayslip.deduction * 0.35).toLocaleString('en-IN')}
+--------------------------------
+Total Deductions:    ₹${activePayslip.deduction.toLocaleString('en-IN')}
+
+NET PAYABLE:         ₹${activePayslip.net.toLocaleString('en-IN')}
+
+Payment Date: 1st of the month
+Payment Mode: Bank Transfer
+Bank Account: XXXX XXXX XXXX 1234
+                  `;
+                  
+                  // Create blob and download
+                  const blob = new Blob([content], { type: 'text/plain' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `Payslip_${activePayslip.month.replace(' ', '_')}.txt`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+                }}
+              >
                 <Download className="mr-2 h-4 w-4" /> Download
               </Button>
-              <Button variant="outline" size="icon">
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => window.print()}
+              >
                 <Printer className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon">
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => {
+                  const subject = `Payslip - ${activePayslip.month}`;
+                  const body = `Please find attached my payslip for ${activePayslip.month}`;
+                  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                }}
+              >
                 <Mail className="h-4 w-4" />
               </Button>
             </div>

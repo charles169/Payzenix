@@ -12,6 +12,20 @@ PayZenix is a comprehensive web-based Payroll and HR Management System with role
 - 📜 Audit logs for all actions
 - 🎨 Professional UI with animated sidebar
 - 📱 Responsive design
+- ⚙️ **NEW:** Settings page with MongoDB persistence (no more localStorage!)
+- 🔄 **NEW:** Real-time page updates without refresh
+- 🔔 **NEW:** Prominent toast notifications
+
+## Recent Updates (February 2026)
+
+### ✅ Settings Database Integration
+Settings page now saves to MongoDB database for permanent persistence across all devices and sessions. See `SETTINGS_DATABASE_INTEGRATION.md` for details.
+
+### ✅ Real-time Updates
+All pages update instantly without page refresh using direct data reload and `usePageFocus` hook.
+
+### ✅ Enhanced Notifications
+Toast notifications with prominent styling (4-second duration, color-coded by type).
 
 ## Technology Stack
 - **Frontend**: React + TypeScript + Vite

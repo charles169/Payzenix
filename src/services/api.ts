@@ -308,3 +308,21 @@ export const auditLogsAPI = {
     return apiRequest('/audit-logs');
   },
 };
+
+// Default export for convenience
+const api = {
+  get: (endpoint: string) => apiRequest(endpoint),
+  post: (endpoint: string, data: any) => apiRequest(endpoint, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  put: (endpoint: string, data: any) => apiRequest(endpoint, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  delete: (endpoint: string) => apiRequest(endpoint, {
+    method: 'DELETE',
+  }),
+};
+
+export default api;
